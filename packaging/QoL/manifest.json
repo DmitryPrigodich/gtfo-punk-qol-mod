@@ -1,0 +1,9 @@
+{
+  "name": "GtfoPunk_QoL",
+  "version_number": "0.6.1",
+  "website_url": "",
+  "description": "Client-side quality-of-life and bug fixes for GTFO. No host needed, no balance changes, safe with randoms. Every feature toggles in config; auto-disables if another mod already does the same.",
+  "dependencies": [
+    "BepInEx-BepInExPack_GTFO-3.2.3"
+  ]
+}
