@@ -10,14 +10,14 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Держишь пачку ресурсов или расходник, смотришь в открытый шкафчик/ящик со свободным местом —
-/// зажми «Использовать» (E), и предмет ляжет обратно. Работает через штатное «положить предмет»,
-/// поэтому синхронизируется у всех.
+/// Holding a resource pack or consumable and looking into an open locker/box with a free slot —
+/// hold "Use" (E) and the item goes back. Uses the stock "place item" action,
+/// so it's synced for everyone.
 /// </summary>
 public class ReturnToLocker : ModuleBase
 {
     public override string Id => "ReturnToLocker";
-    public override string Description => "Положить пачку ресурсов или расходник обратно в открытый шкафчик/ящик (зажать E).";
+    public override string Description => "Put a resource pack or consumable back into an open locker/box (hold E).";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.DropItem, KnownMods.QoLFix };
 
@@ -25,15 +25,15 @@ public class ReturnToLocker : ModuleBase
 
     protected override void OnBindConfig()
     {
-        _holdTime = Bind("HoldSeconds", 0.4f, "Сколько секунд держать E, чтобы положить предмет.");
+        _holdTime = Bind("HoldSeconds", 0.4f, "How many seconds to hold E to put the item back.");
     }
 
     private const float Reach = 1.8f;
     private const float SlotOccupiedRadius = 0.25f;
 
-    private static bool _active;          // сейчас наш промпт показан
+    private static bool _active;          // our prompt is shown right now
     private static float _holdProgress;
-    private static bool _waitRelease;     // после успешного действия ждём отпускания E
+    private static bool _waitRelease;     // after a successful action, wait for E to be released
     private static Transform _target;
     private static LG_ResourceContainer_Storage _storage;
 
@@ -98,7 +98,7 @@ public class ReturnToLocker : ModuleBase
         var cam = agent.FPSCamera;
         if (cam == null) return false;
 
-        // Ищем ближайший контейнер на луче взгляда.
+        // Find the nearest container on the view ray.
         var raw = Physics.RaycastAll(cam.Position, cam.Forward, Reach, ~0, QueryTriggerInteraction.Collide);
         var hits = new RaycastHit[raw.Length];
         for (int i = 0; i < raw.Length; i++) hits[i] = raw[i];
@@ -110,7 +110,7 @@ public class ReturnToLocker : ModuleBase
             if (h.collider == null) continue;
             var c = h.collider.GetComponentInParent<LG_WeakResourceContainer>();
             if (c != null) { container = c; hitPoint = h.point; break; }
-            // Сквозь триггеры, игроков и лежащие предметы смотрим дальше; во всё остальное (стена) — упёрлись.
+            // Look past triggers, players and lying items; anything else (a wall) stops us.
             if (h.collider.isTrigger || h.collider.GetComponentInParent<LG_PickupItem_Sync>() != null
                 || h.collider.GetComponentInParent<PlayerAgent>() != null) continue;
             break;
@@ -122,7 +122,7 @@ public class ReturnToLocker : ModuleBase
         var storage = container.m_storage == null ? null : ((Il2CppObjectBase)container.m_storage).TryCast<LG_ResourceContainer_Storage>();
         if (storage == null || storage.m_storageSlots == null) return false;
 
-        // Свободный слот, ближайший к точке взгляда.
+        // The free slot closest to the look point.
         Transform bestT = null;
         float bestD = float.MaxValue;
         var slots = storage.m_storageSlots;
@@ -172,7 +172,7 @@ public class ReturnToLocker : ModuleBase
         gui.InteractPromptVisible = false;
     }
 
-    // Пока показан наш промпт, штатные взаимодействия не должны перехватывать E.
+    // While our prompt is shown, stock interactions must not grab E.
     [HarmonyPatch(typeof(PlayerInteraction), nameof(PlayerInteraction.UpdateWorldInteractions))]
     private static class Patch_WorldInteractions
     {

@@ -9,7 +9,7 @@ Client-side quality-of-life features and bug fixes for GTFO.
 - In-game text language: `[General] Language = en` (or `ru`).
 - **Plays nice with other mods:** if you already have a mod that does the same thing (QoLFix, PingEverything, PacksHelper, DropItem, ResourceHelper, DMRReloadFix…), the overlapping feature turns itself off. The startup log shows a summary of what is on, off or skipped.
 
-Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rules** (coming later).
+Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rules**.
 
 ## Features
 
@@ -28,10 +28,11 @@ Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rul
 | SprintCancelReload | Sprinting cancels a reload. |
 | AutoReload | Reloads automatically when the magazine runs dry. |
 | LobbyUnready | Lets you un-ready in the lobby (non-host). |
+| InstantReady | Lobby Ready on a single click instead of press-and-hold (option InstantDrop for the host's drop button). |
 | SteamProfileLink | Click a player's name in the lobby to open their Steam profile. |
 | RecentlyPlayedWith | Adds lobby players to Steam's "Recently played with". |
 | ElevatorVolume | Quieter sound effects during the elevator ride (50% by default). |
-| ElevatorSkip | Skips the drop-in sequence. **Off by default.** |
+| ElevatorSkip | Skips the drop-in sequence. |
 | BackgroundFpsLimit | Caps FPS to 30 while the game is not focused. |
 | ScreenLiquidFilter | Hides blood/goo/etc. on screen, per category. **Off by default.** |
 | NoiseRemoval | Removes the blue-noise grain overlay. **Off by default.** |
@@ -61,4 +62,4 @@ Several features re-implement ideas from community mods (rewritten from scratch 
 
 Удобства и багфиксы для GTFO. Всё работает только у тебя: хост не нужен, баланс не меняется, можно играть с рандомами. Каждая фича включается и выключается в `BepInEx/config/AmDDRed.GtfoPunk.QoL.cfg`. Если у тебя уже стоит мод с такой же функцией, наша часть сама выключится. Что включено, что нет и почему — видно в логе при запуске.
 
-Геймплейные изменения будут в отдельном пакете **GtfoPunk My Game My Rules**.
+Геймплейные изменения — в отдельном пакете **GtfoPunk My Game My Rules**.

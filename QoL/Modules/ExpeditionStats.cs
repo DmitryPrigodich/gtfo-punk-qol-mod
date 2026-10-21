@@ -15,17 +15,17 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Статистика экспедиции на экране итогов (успех или провал):
-///  - время, сколько раз кто падал (видно у всех);
-///  - убийства и урон по игрокам — точно считаются, только когда хост ты
-///    (урон по врагам обрабатывает хост); у клиента — общее число убийств команды;
-///  - сколько пачек ты потратил.
-/// Ничего не отправляет по сети.
+/// Expedition stats on the results screen (success or failure):
+///  - time, how many times each player went down (visible to everyone);
+///  - kills and damage per player — counted exactly only when you are the host
+///    (the host processes damage to enemies); on a client — the team's total kills;
+///  - how many packs you used.
+/// Sends nothing over the network.
 /// </summary>
 public class ExpeditionStats : ModuleBase
 {
     public override string Id => "ExpeditionStats";
-    public override string Description => "Статистика экспедиции на экране итогов: время, падения, убийства и урон (точно — когда хостишь), твои пачки.";
+    public override string Description => "Expedition stats on the results screen: time, downs, kills and damage (exact when you host), your packs.";
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { "kain.gtfo.advanced_scoreboard", "Kain_Advanced_Scoreboard" };
 
@@ -60,7 +60,7 @@ public class ExpeditionStats : ModuleBase
         return s;
     }
 
-    // Падения и время — по всем игрокам, у каждого клиента.
+    // Downs and time — for all players, on every client.
     private static void Tick()
     {
         if (!GameUtil.InLevel) return;
@@ -86,11 +86,11 @@ public class ExpeditionStats : ModuleBase
     {
         private static void Postfix(eGameStateName nextState)
         {
-            if (nextState == eGameStateName.Generating) Reset(); // новая высадка
+            if (nextState == eGameStateName.Generating) Reset(); // new drop
         }
     }
 
-    // ---------- урон и убийства (точно — у хоста) ----------
+    // ---------- damage and kills (exact on the host) ----------
 
     private static void OnDamage(Dam_EnemyDamageBase dam, pAgent source, float before, bool hasSource)
     {
@@ -128,7 +128,7 @@ public class ExpeditionStats : ModuleBase
         private static void Postfix(Dam_EnemyDamageBase __instance, float __state) => OnDamage(__instance, default, __state, false);
     }
 
-    // У клиента: общее число убийств по синхронизации здоровья от хоста.
+    // On a client: total kills from the host's health sync.
     [HarmonyPatch(typeof(Dam_EnemyDamageBase), nameof(Dam_EnemyDamageBase.ReceiveSetHealth))]
     private static class Patch_SetHealth
     {
@@ -140,7 +140,7 @@ public class ExpeditionStats : ModuleBase
         }
     }
 
-    // ---------- свои пачки ----------
+    // ---------- own packs ----------
 
     [HarmonyPatch(typeof(ResourcePackFirstPerson), nameof(ResourcePackFirstPerson.ApplyPack))]
     private static class Patch_ApplyPack
@@ -154,7 +154,7 @@ public class ExpeditionStats : ModuleBase
         }
     }
 
-    // ---------- вывод ----------
+    // ---------- output ----------
 
     private static string PackName(eResourceContainerSpawnType t) => t switch
     {

@@ -5,13 +5,13 @@ using Player;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Нажал спринт во время перезарядки — перезарядка отменяется и ты бежишь.
-/// Патроны в магазине остаются как были (перезарядка не засчитывается).
+/// Press sprint during a reload — the reload is cancelled and you run.
+/// The magazine stays as it was (the reload doesn't count).
 /// </summary>
 public class SprintCancelReload : ModuleBase
 {
     public override string Id => "SprintCancelReload";
-    public override string Description => "Спринт отменяет перезарядку (патроны не засчитываются, как при обычной отмене).";
+    public override string Description => "Sprint cancels the reload (rounds aren't added, as with a normal cancel).";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
@@ -19,7 +19,7 @@ public class SprintCancelReload : ModuleBase
     {
         if (owner == null || !owner.IsLocallyOwned) return;
 
-        // RunInput меняет RunToggleLock как побочный эффект — возвращаем как было.
+        // RunInput changes RunToggleLock as a side effect — restore it.
         bool toggleLock = PlayerLocomotion.RunToggleLock;
         bool wantsRun;
         try { wantsRun = PlayerLocomotion.RunInput(owner, crouching); }

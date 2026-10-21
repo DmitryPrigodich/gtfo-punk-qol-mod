@@ -13,13 +13,13 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Пресеты лоадаута: в лобби F5–F8 — надеть комплект 1–4, Shift+F5–F8 — сохранить текущий комплект.
-/// Сохраняется основное, специальное, инструмент и милишка. Хранятся в BepInEx/config/GtfoPunk.LoadoutPresets.json.
+/// Loadout presets: in the lobby F5–F8 — equip set 1–4, Shift+F5–F8 — save the current set.
+/// Main, special, tool and melee are saved. Stored in BepInEx/config/GtfoPunk.LoadoutPresets.json.
 /// </summary>
 public class LoadoutPresets : ModuleBase
 {
     public override string Id => "LoadoutPresets";
-    public override string Description => "Пресеты лоадаута в лобби: F5–F8 — надеть комплект 1–4, Shift+F5–F8 — сохранить текущий.";
+    public override string Description => "Loadout presets in the lobby: F5–F8 — equip set 1–4, Shift+F5–F8 — save the current one.";
     public override ModuleSide Side => ModuleSide.Client;
 
     private static readonly InventorySlot[] Slots =
@@ -118,12 +118,12 @@ public class LoadoutPresets : ModuleBase
             if (File.Exists(FilePath))
                 _presets = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(File.ReadAllText(FilePath)) ?? new();
         }
-        catch (Exception e) { ModInfo.Log.LogWarning("[LoadoutPresets] не удалось прочитать пресеты: " + e.Message); }
+        catch (Exception e) { ModInfo.Log.LogWarning("[LoadoutPresets] failed to read presets: " + e.Message); }
     }
 
     private static void Store()
     {
         try { File.WriteAllText(FilePath, JsonSerializer.Serialize(_presets, new JsonSerializerOptions { WriteIndented = true })); }
-        catch (Exception e) { ModInfo.Log.LogWarning("[LoadoutPresets] не удалось сохранить пресеты: " + e.Message); }
+        catch (Exception e) { ModInfo.Log.LogWarning("[LoadoutPresets] failed to save presets: " + e.Message); }
     }
 }

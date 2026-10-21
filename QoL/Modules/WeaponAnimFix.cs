@@ -4,13 +4,13 @@ using HarmonyLib;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Баг: если сменить оружие раньше конца анимации (например, перезарядки), она «переезжает»
-/// на следующий предмет. Останавливаем последовательность при убирании и при взятии предмета.
+/// Bug: switching weapons before an animation (e.g. reload) ends makes it "move over"
+/// to the next item. Stop the sequence when holstering and when drawing an item.
 /// </summary>
 public class WeaponAnimFix : ModuleBase
 {
     public override string Id => "WeaponAnimFix";
-    public override string Description => "Анимация перезарядки не переносится на другое оружие при быстрой смене.";
+    public override string Description => "The reload animation doesn't carry over to another weapon on a quick switch.";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 

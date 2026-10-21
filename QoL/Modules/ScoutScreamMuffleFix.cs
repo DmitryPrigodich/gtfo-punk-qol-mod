@@ -6,14 +6,14 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// После крика скаута игра приглушает звук, и иногда он так и остаётся приглушённым.
-/// Сбрасываем приглушение через 15 с после крика, а также при выходе в лобби/меню
-/// (там же сбрасываем приглушение от меню и карты).
+/// After a scout scream the game muffles the sound, and sometimes it stays muffled.
+/// Reset the muffle 15 s after the scream, and also when leaving to the lobby/menu
+/// (also reset the menu and map muffles there).
 /// </summary>
 public class ScoutScreamMuffleFix : ModuleBase
 {
     public override string Id => "ScoutScreamMuffleFix";
-    public override string Description => "Звук не остаётся приглушённым после крика скаута (и после выхода в лобби).";
+    public override string Description => "Sound doesn't stay muffled after a scout scream (and after leaving to the lobby).";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 

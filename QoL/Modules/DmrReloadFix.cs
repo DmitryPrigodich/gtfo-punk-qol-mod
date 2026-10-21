@@ -5,14 +5,14 @@ using Player;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Баг расчёта перезарядки: при некоторых остатках в магазине (заметнее всего у DMR, когда остался
-/// один патрон) игра набивает магазин не до конца. Повторный расчёт от результата первого доливает
-/// недостающее; если магазин уже полный, второй вызов ничего не меняет.
+/// Reload calculation bug: with some leftover rounds in the magazine (most noticeable on the DMR with
+/// one round left) the game doesn't fill the magazine completely. Recalculating from the first result tops up
+/// what's missing; if the magazine is already full, the second call changes nothing.
 /// </summary>
 public class DmrReloadFix : ModuleBase
 {
     public override string Id => "DmrReloadFix";
-    public override string Description => "Фикс недозарядки магазина (баг DMR при одном оставшемся патроне).";
+    public override string Description => "Fix for the magazine not filling completely (DMR bug with one round left).";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { "DMRReloadFix" };
 
@@ -23,7 +23,7 @@ public class DmrReloadFix : ModuleBase
     {
         private static bool Prefix(PlayerAmmoStorage __instance, ref int __result, int currentClip, AmmoType ammoType)
         {
-            if (_inner) return true; // наш собственный вложенный вызов — пусть идёт в оригинал
+            if (_inner) return true; // our own nested call — let it go to the original
             _inner = true;
             try
             {

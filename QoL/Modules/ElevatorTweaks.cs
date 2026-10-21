@@ -4,13 +4,12 @@ using HarmonyLib;
 
 namespace GtfoPunk.QoL.Modules;
 
-/// <summary>Пропуск сцены высадки из лифта. По умолчанию ВЫКЛЮЧЕН — это часть атмосферы.</summary>
+/// <summary>Skip the elevator drop-in scene (seats, unbuckling) — you are in the level right away.</summary>
 public class ElevatorSkip : ModuleBase
 {
     public override string Id => "ElevatorSkip";
-    public override string Description => "Пропускать сцену высадки из лифта (сидения, отстёгивание). По умолчанию выключено.";
+    public override string Description => "Skip the elevator drop-in scene (seats, unbuckling).";
     public override ModuleSide Side => ModuleSide.Client;
-    public override bool EnabledByDefault => false;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
     [HarmonyPatch(typeof(ElevatorRide), nameof(ElevatorRide.StartPreReleaseSequence))]
@@ -20,11 +19,11 @@ public class ElevatorSkip : ModuleBase
     }
 }
 
-/// <summary>Громкость звуковых эффектов во время поездки на лифте (от генерации уровня до высадки).</summary>
+/// <summary>Sound effects volume during the elevator ride (from level generation to drop-in).</summary>
 public class ElevatorVolume : ModuleBase
 {
     public override string Id => "ElevatorVolume";
-    public override string Description => "Тише звуки во время поездки на лифте. Громкость задаётся ниже.";
+    public override string Description => "Quieter sounds during the elevator ride. Volume is set below.";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
@@ -34,7 +33,7 @@ public class ElevatorVolume : ModuleBase
 
     protected override void OnBindConfig()
     {
-        _volume = Bind("Volume", 0.5f, "Громкость эффектов в лифте: 1 = как в настройках, 0.5 = половина, 0 = тишина.");
+        _volume = Bind("Volume", 0.5f, "Effects volume in the elevator: 1 = as in settings, 0.5 = half, 0 = silence.");
     }
 
     private static bool InElevator(eGameStateName s) =>
@@ -43,11 +42,11 @@ public class ElevatorVolume : ModuleBase
 
     private static void Apply(eGameStateName state)
     {
-        if (!_focused) return; // свёрнутой игрой управляет сама игра (mute in background)
+        if (!_focused) return; // the game handles a minimized window itself (mute in background)
         if (InElevator(state))
         {
             float sfx = CellSettingsManager.SettingsData.Audio.SFXVolume.Value;
-            float basePercent = sfx <= 1.0001f ? sfx * 100f : sfx; // настройка может храниться как 0..1 или 0..100
+            float basePercent = sfx <= 1.0001f ? sfx * 100f : sfx; // the setting may be stored as 0..1 or 0..100
             CellSound.SetGlobalRTPCValue(GAME_PARAMETERS.VOLUME_SETTING_SFX, basePercent * UnityEngine.Mathf.Clamp01(_volume.Value));
             _applied = true;
         }

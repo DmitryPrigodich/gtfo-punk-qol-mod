@@ -10,14 +10,14 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Когда тиммейт даёт тебе патроны или лечит, у тебя играет звук применения пачки.
-/// В ванилле звук слышит только тот, кто применяет, поэтому получение легко пропустить.
-/// Если пачку на себя применил ты сам, лишний звук не играет.
+/// When a teammate gives you ammo or heals you, you hear the pack-use sound.
+/// In vanilla only the one applying hears it, so it's easy to miss receiving.
+/// If you applied the pack to yourself, no extra sound plays.
 /// </summary>
 public class ResourceReceivedSound : ModuleBase
 {
     public override string Id => "ResourceReceivedSound";
-    public override string Description => "Звук, когда тиммейт дал тебе патроны или подлечил.";
+    public override string Description => "A sound when a teammate gave you ammo or healed you.";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
@@ -26,10 +26,10 @@ public class ResourceReceivedSound : ModuleBase
     protected override void OnBindConfig()
     {
         _minHeal = Bind("MinHealPercent", 5f,
-            "Минимальный прирост здоровья (в % от максимума), на который играет звук. Отсекает естественную регенерацию.");
+            "Minimum health gain (in % of max) that plays the sound. Filters out natural regeneration.");
     }
 
-    /// <summary>До этого момента считаем, что ресурс пришёл от нашей же пачки (применили на себя).</summary>
+    /// <summary>Until this moment we assume the resource came from our own pack (applied to self).</summary>
     private static float _selfApplyUntil;
 
     private static bool SelfApplyActive => Time.time < _selfApplyUntil;
@@ -40,7 +40,7 @@ public class ResourceReceivedSound : ModuleBase
         agent?.Sound?.Post(soundEvent, true);
     }
 
-    // Запоминаем, что мы применяем пачку на себя: ответ (особенно у клиента) придёт с задержкой по сети.
+    // Remember that we're applying a pack to ourselves: the response (especially on a client) arrives with network delay.
     [HarmonyPatch(typeof(ResourcePackFirstPerson), nameof(ResourcePackFirstPerson.ApplyPack))]
     private static class Patch_ApplyPack
     {
@@ -79,7 +79,7 @@ public class ResourceReceivedSound : ModuleBase
             float before = __instance.Health;
             float after = data.health.Get(max);
 
-            if (!GameUtil.InLevel || SelfApplyActive || before <= 0f || max <= 0f) return; // лежим/поднимают — не наш случай
+            if (!GameUtil.InLevel || SelfApplyActive || before <= 0f || max <= 0f) return; // downed/being revived — not our case
             if ((after - before) / max * 100f >= _minHeal.Value)
                 PlayLocal(EVENTS.MEDPACK_APPLY);
         }

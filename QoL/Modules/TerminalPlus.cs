@@ -12,20 +12,20 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Терминал «как Linux». Всё локальное: другие игроки видят обычные команды.
-///  - Алиасы: ls/l/dir → LIST, cat/less → READ, clear → CLS, p → PING, q → QUERY, man → HELP, uv/uc/rs/rv… (как в BashTerm).
-///  - Сокращения объектов: «p am 69» → PING AMMOPACK_69, «q med 12» → QUERY MEDIPACK_12.
-///  - Пайпы: «ls | grep ammo», «ls | grep -v locker» — фильтрует вывод только у тебя.
-///  - История: !! (последняя), !5 (по номеру), !pi (последняя на «pi»), history — список.
-///  - Горячие клавиши: Ctrl+L — очистить экран, Ctrl+C / Ctrl+U — стереть строку, Ctrl+V — вставить,
-///    Ctrl+R — поиск по истории (повторное нажатие — следующее совпадение).
-///  - Мелочи: whoami, echo, uname, uptime.
-/// Стрелки ↑/↓ (история) и Tab (дополнение) работают штатно.
+/// A "Linux-like" terminal. Everything is local: other players see regular commands.
+///  - Aliases: ls/l/dir → LIST, cat/less → READ, clear → CLS, p → PING, q → QUERY, man → HELP, uv/uc/rs/rv… (as in BashTerm).
+///  - Object shorthands: "p am 69" → PING AMMOPACK_69, "q med 12" → QUERY MEDIPACK_12.
+///  - Pipes: "ls | grep ammo", "ls | grep -v locker" — filters the output only for you.
+///  - History: !! (last), !5 (by number), !pi (last starting with "pi"), history — list.
+///  - Hotkeys: Ctrl+L — clear screen, Ctrl+C / Ctrl+U — erase line, Ctrl+V — paste,
+///    Ctrl+R — history search (press again for the next match).
+///  - Small stuff: whoami, echo, uname, uptime.
+/// Arrows ↑/↓ (history) and Tab (completion) work as stock.
 /// </summary>
 public class TerminalPlus : ModuleBase
 {
     public override string Id => "TerminalPlus";
-    public override string Description => "Терминал «как Linux»: алиасы (ls, cat, clear, p, q…), | grep, !!, history, Ctrl+L/C/U/V/R.";
+    public override string Description => "Linux-like terminal: aliases (ls, cat, clear, p, q…), | grep, !!, history, Ctrl+L/C/U/V/R.";
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { "io.takina.gtfo.BashTerm", "BashTerm", "Drummerx04.TerminalCompletionPlugin", "TerminalCompletion", "BetterTerminal" };
 
@@ -33,11 +33,11 @@ public class TerminalPlus : ModuleBase
 
     protected override void OnBindConfig()
     {
-        _aliases = Bind("Aliases", true, "Алиасы команд (ls, cat, clear, p, q, man, uv, uc, rs, rv…).");
-        _expand = Bind("ObjectExpansion", true, "Сокращения объектов в PING/QUERY: «p am 69» → PING AMMOPACK_69.");
+        _aliases = Bind("Aliases", true, "Command aliases (ls, cat, clear, p, q, man, uv, uc, rs, rv…).");
+        _expand = Bind("ObjectExpansion", true, "Object shorthands in PING/QUERY: 'p am 69' → PING AMMOPACK_69.");
     }
 
-    // ---------- данные ----------
+    // ---------- data ----------
 
     private static readonly Dictionary<string, string> CmdAlias = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -54,7 +54,7 @@ public class TerminalPlus : ModuleBase
         ["nhsu"] = "NEONATE_HSU", ["diss"] = "DISINFECTION_STATION",
     };
 
-    // Порядок важен: длинные префиксы раньше коротких.
+    // Order matters: longer prefixes before shorter ones.
     private static readonly (string pre, string full)[] ObjPrefix =
     {
         ("turb", "FOG_TURBINE"), ("bulk", "BULKHEAD_KEY"), ("data", "DATA_CUBE"), ("lock", "LOCKER"),
@@ -103,7 +103,7 @@ public class TerminalPlus : ModuleBase
         t.m_caretBlinkOffsetFromEnd = 0;
     }
 
-    // ---------- горячие клавиши ----------
+    // ---------- hotkeys ----------
 
     [HarmonyPatch(typeof(LG_TERM_PlayerInteracting), nameof(LG_TERM_PlayerInteracting.Update))]
     private static class Patch_Update
@@ -147,10 +147,10 @@ public class TerminalPlus : ModuleBase
             SetLine(t, st.History[i]);
             return;
         }
-        st.SearchIndex = st.History.Count; // по кругу
+        st.SearchIndex = st.History.Count; // wrap around
     }
 
-    // ---------- Enter: история, пайпы, локальные команды ----------
+    // ---------- Enter: history, pipes, local commands ----------
 
     [HarmonyPatch(typeof(LG_TERM_PlayerInteracting), nameof(LG_TERM_PlayerInteracting.OnReturn))]
     [HarmonyPriority(Priority.High)]
@@ -167,7 +167,7 @@ public class TerminalPlus : ModuleBase
             string line = (t.m_currentLine ?? "").Trim();
             if (line.Length == 0) return true;
 
-            // История: !!, !N, !prefix
+            // History: !!, !N, !prefix
             if (line.StartsWith("!"))
             {
                 string found = ExpandHistory(st, line.Substring(1));
@@ -178,7 +178,7 @@ public class TerminalPlus : ModuleBase
             st.History.Add(line);
             if (st.History.Count > 200) st.History.RemoveAt(0);
 
-            // Пайп: «команда | grep X» / «| grep -v X»
+            // Pipe: "command | grep X" / "| grep -v X"
             string cmd = line;
             int bar = line.IndexOf('|');
             if (bar >= 0)
@@ -245,7 +245,7 @@ public class TerminalPlus : ModuleBase
         }
     }
 
-    // ---------- алиасы и сокращения (до разбора команды игрой) ----------
+    // ---------- aliases and shorthands (before the game parses the command) ----------
 
     [HarmonyPatch(typeof(LG_ComputerTerminalCommandInterpreter), nameof(LG_ComputerTerminalCommandInterpreter.EvaluateInput))]
     private static class Patch_Evaluate
@@ -284,7 +284,7 @@ public class TerminalPlus : ModuleBase
     private static string ExpandObj(string w)
     {
         if (ObjExact.TryGetValue(w, out var e)) return e;
-        if (w.Contains('_')) return w; // уже полное имя
+        if (w.Contains('_')) return w; // already a full name
         foreach (var (pre, full) in ObjPrefix)
             if (w.StartsWith(pre, StringComparison.OrdinalIgnoreCase) && full.StartsWith(w, StringComparison.OrdinalIgnoreCase) || w.Equals(pre, StringComparison.OrdinalIgnoreCase))
                 return full;
@@ -293,7 +293,7 @@ public class TerminalPlus : ModuleBase
         return w;
     }
 
-    // ---------- grep: фильтр вывода ----------
+    // ---------- grep: output filter ----------
 
     private static readonly Regex Tags = new("<[^>]+>", RegexOptions.Compiled);
 

@@ -9,22 +9,22 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Удобное управление пачкой ресурсов:
-///  - зажать E — применить на того, на кого смотришь, а если ни на кого — на себя;
-///  - зажать ЛКМ — на себя (как в ванилле);
-///  - зажать ПКМ, глядя на тиммейта, — на него.
-/// Логика выбора цели повторяет проверенную схему из PacksHelper (Localia).
+/// Convenient resource pack controls:
+///  - hold E — apply to whoever you look at, or to yourself if nobody;
+///  - hold LMB — on yourself (as in vanilla);
+///  - hold RMB while looking at a teammate — on them.
+/// Target selection follows the proven scheme from PacksHelper (Localia).
 /// </summary>
 public class PackControls : ModuleBase
 {
     public override string Id => "PackControls";
-    public override string Description => "Пачка: E — на цель или на себя, ЛКМ — на себя, ПКМ — на тиммейта, на которого смотришь.";
+    public override string Description => "Pack: E — on target or yourself, LMB — on yourself, RMB — on the teammate you look at.";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.PacksHelper };
 
     private const float GiveRange = 2.4f;
 
-    // Флаги «окна» внутри одного вызова UpdateInteraction.
+    // "Window" flags within a single UpdateInteraction call.
     private static bool _pickTarget, _forceStart, _forceCondition;
 
     private static bool Down(PlayerAgent a, InputAction act) => InputMapper.GetButtonDown.Invoke(act, a.InputFilter);
@@ -84,7 +84,7 @@ public class PackControls : ModuleBase
 
             if (receiver.IsLocallyOwned)
             {
-                __instance.UpdateInteractionActionName(Text.Get(856u)); // «на себя», штатный текст
+                __instance.UpdateInteractionActionName(Text.Get(856u)); // "on yourself", stock text
                 if (!useDown) interact.m_input = InputAction.Fire;
             }
             else
@@ -99,7 +99,7 @@ public class PackControls : ModuleBase
         }
     }
 
-    // Начинаем таймер при удержании кнопки, а не только в момент нажатия.
+    // Start the timer while the button is held, not only at the moment it's pressed.
     [HarmonyPatch(typeof(Interact_Timed), nameof(Interact_Timed.PlayerCheckInput))]
     private static class Patch_CheckInput
     {
@@ -120,7 +120,7 @@ public class PackControls : ModuleBase
     [HarmonyPatch(typeof(Interact_ManualTimedWithCallback), nameof(Interact_ManualTimedWithCallback.ManualUpdateWithCondition))]
     private static class Patch_Condition
     {
-        // Как в PacksHelper: при применении на себя по ЛКМ форсируем selectedOnIdle.
+        // As in PacksHelper: when applying to self with LMB, force selectedOnIdle.
         private static void Prefix(ref bool selectedOnIdle)
         {
             if (!_forceCondition) return;

@@ -5,13 +5,13 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Клавиша, которая прячет весь HUD (для скриншотов и видео) и возвращает обратно.
-/// Настройки игры не трогает — просто скрывает слои интерфейса до повторного нажатия или выхода из уровня.
+/// A key that hides the whole HUD (for screenshots and videos) and brings it back.
+/// Doesn't touch game settings — just hides the UI layers until pressed again or the level is left.
 /// </summary>
 public class HudToggle : ModuleBase
 {
     public override string Id => "HudToggle";
-    public override string Description => "Клавиша, которая прячет весь HUD для скриншотов (по умолчанию F9).";
+    public override string Description => "A key that hides the whole HUD for screenshots (F9 by default).";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { "HUDToggler" };
 
@@ -20,7 +20,7 @@ public class HudToggle : ModuleBase
 
     protected override void OnBindConfig()
     {
-        _key = Bind("Key", KeyCode.F9, "Клавиша скрытия HUD.");
+        _key = Bind("Key", KeyCode.F9, "HUD toggle key.");
     }
 
     protected override void OnEnable()

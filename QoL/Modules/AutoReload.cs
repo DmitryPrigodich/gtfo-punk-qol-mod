@@ -7,13 +7,13 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Автоперезарядка: магазин опустел — оружие само перезаряжается (через небольшую паузу).
-/// Не перезаряжает на бегу и во время удержания E (взлом, подбор и т. п.).
+/// Auto reload: the magazine runs dry — the weapon reloads by itself (after a short pause).
+/// Doesn't reload while sprinting or while holding E (hacking, picking up, etc.).
 /// </summary>
 public class AutoReload : ModuleBase
 {
     public override string Id => "AutoReload";
-    public override string Description => "Автоперезарядка, когда магазин опустел.";
+    public override string Description => "Auto reload when the magazine runs dry.";
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { "Dinorush.AutoReloadPlus", "AutoReloadPlus", "AutoReload" };
 
@@ -22,8 +22,8 @@ public class AutoReload : ModuleBase
 
     protected override void OnBindConfig()
     {
-        _delay = Bind("Delay", 0.25f, "Пауза (сек) после последнего патрона перед перезарядкой.");
-        _whileRunning = Bind("WhileRunning", false, "Перезаряжать и на бегу.");
+        _delay = Bind("Delay", 0.25f, "Pause (s) after the last round before reloading.");
+        _whileRunning = Bind("WhileRunning", false, "Reload while sprinting too.");
     }
 
     private static float _emptySince = -1f;
@@ -41,7 +41,7 @@ public class AutoReload : ModuleBase
         if (_emptySince < 0f) { _emptySince = Time.time; return; }
         if (Time.time - _emptySince < _delay.Value) return;
         if (!_whileRunning.Value && agent.Locomotion != null && agent.Locomotion.IsRunning) return;
-        // Не мешаем удержанию E (взлом замка, подбор, терминал).
+        // Don't interfere with holding E (lock hacking, pickup, terminal).
         var interact = agent.Interaction?.m_bestSelectedInteract;
         var timed = interact == null ? null : ((Il2CppObjectBase)interact).TryCast<Interact_Timed>();
         if (timed != null && timed.TimerIsActive) return;

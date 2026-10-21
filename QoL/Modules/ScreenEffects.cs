@@ -8,13 +8,13 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Убирает «жидкости на стекле»: кровь, слизь, дезинфекцию, воду, пот инфекции — по категориям.
-/// Влияет только на твой экран. По умолчанию модуль выключен (это часть атмосферы).
+/// Removes "liquids on the glass": blood, goo, disinfection, water, infection sweat — by category.
+/// Affects only your screen. The module is off by default (it's part of the atmosphere).
 /// </summary>
 public class ScreenLiquidFilter : ModuleBase
 {
     public override string Id => "ScreenLiquidFilter";
-    public override string Description => "Убирать эффекты жидкостей на экране (по категориям ниже). По умолчанию выключено.";
+    public override string Description => "Remove liquid effects on screen (by the categories below). Off by default.";
     public override ModuleSide Side => ModuleSide.Client;
     public override bool EnabledByDefault => false;
     public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
@@ -23,12 +23,12 @@ public class ScreenLiquidFilter : ModuleBase
 
     protected override void OnBindConfig()
     {
-        _enemyBlood = Bind("HideEnemyBlood", true, "Убрать брызги крови врагов.");
-        _playerBlood = Bind("HidePlayerBlood", true, "Убрать кровь, когда ранят тебя.");
-        _goo = Bind("HideGoo", true, "Убрать слизь (спиттеры, шутеры, анемоны).");
-        _water = Bind("HideWater", false, "Убрать капли воды и дождь (в том числе в лифте).");
-        _disinfection = Bind("HideDisinfection", false, "Убрать брызги дезинфекции.");
-        _infection = Bind("HideInfection", false, "Убрать «пот» инфекции на стекле.");
+        _enemyBlood = Bind("HideEnemyBlood", true, "Remove enemy blood splatter.");
+        _playerBlood = Bind("HidePlayerBlood", true, "Remove blood when you get hurt.");
+        _goo = Bind("HideGoo", true, "Remove goo (spitters, shooters, anemones).");
+        _water = Bind("HideWater", false, "Remove water drops and rain (including in the elevator).");
+        _disinfection = Bind("HideDisinfection", false, "Remove disinfection splashes.");
+        _infection = Bind("HideInfection", false, "Remove infection \"sweat\" on the glass.");
     }
 
     private static bool ShouldHide(ScreenLiquidSettingName s)
@@ -61,13 +61,13 @@ public class ScreenLiquidFilter : ModuleBase
 }
 
 /// <summary>
-/// Убирает синий шум («зерно») поверх картинки. Изображение чище, но тёмные места могут стать заметно темнее.
-/// По умолчанию выключено.
+/// Removes the blue noise ("grain") over the image. The picture is cleaner, but dark areas may get noticeably darker.
+/// Off by default.
 /// </summary>
 public class NoiseRemoval : ModuleBase
 {
     public override string Id => "NoiseRemoval";
-    public override string Description => "Убрать синий шум (зерно) поверх картинки. Тёмные места могут стать темнее. По умолчанию выключено.";
+    public override string Description => "Remove the blue noise (grain) over the image. Dark areas may get darker. Off by default.";
     public override ModuleSide Side => ModuleSide.Client;
     public override bool EnabledByDefault => false;
     public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
@@ -83,7 +83,7 @@ public class NoiseRemoval : ModuleBase
             if (_empty == null)
             {
                 var tex = new Texture2D(1, 1, TextureFormat.ARGB32, false);
-                tex.SetPixel(0, 0, new Color(0.5f, 0.5f, 0.5f, 0.5f)); // нейтральное значение вместо шума
+                tex.SetPixel(0, 0, new Color(0.5f, 0.5f, 0.5f, 0.5f)); // neutral value instead of noise
                 tex.Apply();
                 tex.hideFlags = HideFlags.HideAndDontSave;
                 _empty = tex;

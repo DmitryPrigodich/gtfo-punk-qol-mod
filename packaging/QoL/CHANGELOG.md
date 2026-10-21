@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.3
+- New **InstantReady**: the lobby Ready button works on a single click instead of press-and-hold. Option InstantDrop makes the host's drop button instant too (off by default).
+- **ElevatorSkip** is now on by default (existing configs keep their own value).
+
+## 0.6.2
+- Config descriptions and log messages are now in English (Russian stays in the in-game localization, `[General] Language = ru`). No behaviour changes; setting keys are unchanged, so existing configs keep their values.
+
 ## 0.6.1
 - **AutoReload**: reloads automatically when the magazine is empty (not while sprinting or holding E). Turns itself off if AutoReloadPlus is installed.
 

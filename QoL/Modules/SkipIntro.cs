@@ -4,11 +4,11 @@ using HarmonyLib;
 
 namespace GtfoPunk.QoL.Modules;
 
-/// <summary>Пропускает заставку при запуске игры (сразу жмёт «Inject»).</summary>
+/// <summary>Skips the intro at game start (presses "Inject" right away).</summary>
 public class SkipIntro : ModuleBase
 {
     public override string Id => "SkipIntro";
-    public override string Description => "Пропускать интро-заставку при запуске игры.";
+    public override string Description => "Skip the intro at game start.";
     public override ModuleSide Side => ModuleSide.Client;
 
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[]

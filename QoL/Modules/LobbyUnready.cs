@@ -6,11 +6,11 @@ using SNetwork;
 
 namespace GtfoPunk.QoL.Modules;
 
-/// <summary>Кнопка «Готов» в лобби остаётся активной после нажатия — можно передумать и снять готовность.</summary>
+/// <summary>The lobby "Ready" button stays active after pressing — you can change your mind and unready.</summary>
 public class LobbyUnready : ModuleBase
 {
     public override string Id => "LobbyUnready";
-    public override string Description => "Можно снять «Готов» в лобби, если нажал случайно (не для хоста).";
+    public override string Description => "You can unready in the lobby if you pressed Ready by accident (not for the host).";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 

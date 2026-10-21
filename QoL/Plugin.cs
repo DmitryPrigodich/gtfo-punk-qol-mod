@@ -5,15 +5,15 @@ using GtfoPunk.Core;
 namespace GtfoPunk.QoL;
 
 /// <summary>
-/// GtfoPunk QoL — удобства и багфиксы. Всё работает у себя, хост не нужен, баланс не трогает.
-/// Безопасно для игры с рандомами.
+/// GtfoPunk QoL — conveniences and bug fixes. Everything works locally, no host needed, no balance changes.
+/// Safe to play with randoms.
 /// </summary>
 [BepInPlugin(GUID, NAME, VERSION)]
 public class Plugin : BasePlugin
 {
     public const string GUID = "AmDDRed.GtfoPunk.QoL";
     public const string NAME = "GtfoPunk QoL";
-    public const string VERSION = "0.6.1";
+    public const string VERSION = "0.6.3";
 
     public override void Load() => ModInfo.Start(GUID, NAME, VERSION, Config, Log);
 }

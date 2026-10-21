@@ -5,15 +5,15 @@ using SNetwork;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Пробный модуль: при высадке в уровень пишет в локальный чат статус мода.
-/// Нужен, чтобы убедиться, что патчи и игровое API работают. Сообщение видишь только ты.
+/// Test module: on drop-in writes the mod status to the local chat.
+/// Used to make sure patches and the game API work. Only you see the message.
 /// </summary>
 public class StatusInChat : ModuleBase
 {
     public override string Id => "StatusInChat";
-    public override string Description => "Пишет в твой чат статус мода при высадке в уровень (видишь только ты).";
+    public override string Description => "Writes the mod status to your chat on drop-in (only you see it).";
     public override ModuleSide Side => ModuleSide.Client;
-    public override bool EnabledByDefault => false; // тестовый модуль, своё отработал
+    public override bool EnabledByDefault => false; // test module, done its job
 
     [HarmonyPatch(typeof(GameStateManager), nameof(GameStateManager.DoChangeState))]
     private static class Patch_DoChangeState

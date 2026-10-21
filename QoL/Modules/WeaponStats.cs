@@ -12,14 +12,14 @@ using Player;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// В лоадауте к описанию оружия добавляется блок статов: урон, магазин, запас, темп стрельбы,
-/// перезарядка, множители, разброс, пробитие — и сколько попаданий нужно на типовых спящих.
-/// Данные берутся из таблиц игры, поэтому работают и для модовых рандаунов.
+/// In the loadout a stats block is added to the weapon description: damage, magazine, reserve, rate of fire,
+/// reload, multipliers, spread, penetration — and how many hits typical sleepers take.
+/// Data comes from the game tables, so it works for modded rundowns too.
 /// </summary>
 public class WeaponStats : ModuleBase
 {
     public override string Id => "WeaponStats";
-    public override string Description => "Статы оружия в описании при выборе в лоадауте (урон, магазин, темп, попаданий до убийства и т.д.).";
+    public override string Description => "Weapon stats in the description when picking in the loadout (damage, magazine, rate, hits to kill, etc.).";
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { "WeaponStatShower", "DescriptiveWeaponStatShower" };
 
@@ -27,13 +27,13 @@ public class WeaponStats : ModuleBase
 
     protected override void OnBindConfig()
     {
-        _hitsToKill = Bind("ShowHitsToKill", true, "Показывать, сколько попаданий нужно на типовых спящих (в голову / в тело).");
+        _hitsToKill = Bind("ShowHitsToKill", true, "Show how many hits typical sleepers take (head / body).");
     }
 
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
     private static string F(float v, int digits = 1) => Math.Round(v, digits).ToString(Inv);
 
-    // HP и множитель урона в голову у типовых врагов (ванильные значения; armored — голова бронирована).
+    // HP and head damage multiplier of typical enemies (vanilla values; armored — the head is armored).
     private static readonly (string name, float hp, float head, bool armoredHead)[] Sleepers =
     {
         ("Striker", 20f, 3f, false),

@@ -7,15 +7,15 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Точнее HUD:
-///  - здоровье с десятыми и в единицах HP («73.4% · 18/25»);
-///  - у инструмента (турель, миномёт, пена, мины) — сколько зарядов осталось, а не только проценты;
-///  - на карте у тиммейтов — здоровье и заражение.
+/// More precise HUD:
+///  - health with tenths and in HP units ("73.4% · 18/25");
+///  - for the tool (sentry, mine deployer, foam, mines) — how many charges are left, not just percent;
+///  - on the map — teammates' health and infection.
 /// </summary>
 public class PreciseHud : ModuleBase
 {
     public override string Id => "PreciseHud";
-    public override string Description => "Точные цифры на HUD: здоровье с десятыми и в HP, заряды инструмента, здоровье/заражение тиммейтов на карте.";
+    public override string Description => "Exact numbers on the HUD: health with tenths and in HP, tool charges, teammates' health/infection on the map.";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { "Andocas.PreciseUI", "PreciseUI" };
 
@@ -23,9 +23,9 @@ public class PreciseHud : ModuleBase
 
     protected override void OnBindConfig()
     {
-        _health = Bind("Health", true, "Здоровье с десятыми и в единицах HP.");
-        _tool = Bind("ToolCharges", true, "Сколько зарядов осталось у инструмента.");
-        _map = Bind("TeamOnMap", true, "Здоровье и заражение тиммейтов на экране карты.");
+        _health = Bind("Health", true, "Health with tenths and in HP units.");
+        _tool = Bind("ToolCharges", true, "How many charges the tool has left.");
+        _map = Bind("TeamOnMap", true, "Teammates' health and infection on the map screen.");
     }
 
     private static readonly CultureInfo Inv = CultureInfo.InvariantCulture;

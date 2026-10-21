@@ -10,15 +10,15 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Показывает пинг:
-///  - в лобби рядом с ником каждого игрока;
-///  - в миссии рядом с водяным знаком в углу экрана (твой пинг до хоста).
-/// Пинг берётся из реального соединения Steam, а если его нет — из оценки игры.
+/// Shows ping:
+///  - in the lobby next to each player's name;
+///  - in a mission next to the watermark in the screen corner (your ping to the host).
+/// Ping comes from the real Steam connection, or from the game's estimate if there is none.
 /// </summary>
 public class PingDisplay : ModuleBase
 {
     public override string Id => "PingDisplay";
-    public override string Description => "Пинг игроков в лобби и твой пинг до хоста в углу экрана во время миссии.";
+    public override string Description => "Players' ping in the lobby and your ping to the host in the screen corner during a mission.";
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix, "ModList" };
 
@@ -28,32 +28,32 @@ public class PingDisplay : ModuleBase
 
     protected override void OnBindConfig()
     {
-        _inLobby = Bind("ShowInLobby", true, "Показывать пинг рядом с никами в лобби.");
-        _inHud = Bind("ShowInHud", true, "Показывать твой пинг до хоста в углу экрана в миссии.");
-        _interval = Bind("UpdateInterval", 0.5f, "Как часто обновлять, в секундах.");
+        _inLobby = Bind("ShowInLobby", true, "Show ping next to names in the lobby.");
+        _inHud = Bind("ShowInHud", true, "Show your ping to the host in the screen corner during a mission.");
+        _interval = Bind("UpdateInterval", 0.5f, "How often to update, in seconds.");
     }
 
     private const int Host = -1, Unknown = -2;
 
-    // ---------- получение пинга ----------
+    // ---------- getting the ping ----------
 
     private static bool _steamApiBroken;
 
-    /// <summary>RTT до игрока в мс; Host = он хост (или это мы-хост); Unknown = не знаем.</summary>
+    /// <summary>RTT to the player in ms; Host = they are the host (or we are the host); Unknown = we don't know.</summary>
     private static int GetPing(SNet_Player player)
     {
         if (player == null) return Unknown;
         if (player.IsMaster) return Host;
         if (player.IsLocal)
         {
-            // Наш пинг имеет смысл только до хоста.
+            // Our ping only makes sense to the host.
             if (!SNet.HasMaster || SNet.Master == null) return Unknown;
             if (SNet.Master.IsLocal) return Host;
             return GetPing(SNet.Master);
         }
         if (player.IsBot) return Unknown;
 
-        // Мы клиент, а это другой клиент: прямого соединения нет, мерить нечего.
+        // We're a client and this is another client: no direct connection, nothing to measure.
         if (!SNet.IsMaster && !player.IsMaster) return Unknown;
 
         int rtt = SteamRtt(player.Lookup);
@@ -74,8 +74,8 @@ public class PingDisplay : ModuleBase
         }
         catch (Exception e)
         {
-            _steamApiBroken = true; // один раз пишем в лог и дальше живём на оценке игры
-            ModInfo.Log.LogWarning($"[PingDisplay] Steam API недоступен, использую оценку игры: {e.Message}");
+            _steamApiBroken = true; // log once and live on the game's estimate from then on
+            ModInfo.Log.LogWarning($"[PingDisplay] Steam API unavailable, using the game's estimate: {e.Message}");
         }
         return -1;
     }
@@ -89,7 +89,7 @@ public class PingDisplay : ModuleBase
         _ => $"<color=#ff6b6b>{ping} ms</color>",
     };
 
-    // ---------- отрисовка ----------
+    // ---------- drawing ----------
 
     private static float _nextUpdate;
     private static PUI_Watermark _watermark;
@@ -134,7 +134,7 @@ public class PingDisplay : ModuleBase
             _watermark.m_watermarkText.SetText(text);
     }
 
-    // Запоминаем «чистый» текст водяного знака каждый раз, когда игра его переписывает.
+    // Remember the "clean" watermark text every time the game rewrites it.
     [HarmonyPatch(typeof(PUI_Watermark), nameof(PUI_Watermark.UpdateWatermark))]
     private static class Patch_Watermark
     {

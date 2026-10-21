@@ -6,13 +6,13 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Пена из C-Foam проскакивает сквозь закрытую слабую дверь, если целиться в щели.
-/// Чуть увеличиваем коллайдеры полотна двери по высоте, чтобы щелей не было.
+/// C-foam slips through a closed weak door if you aim at the gaps.
+/// Slightly enlarge the door panel colliders vertically so there are no gaps.
 /// </summary>
 public class DoorFoamFix : ModuleBase
 {
     public override string Id => "DoorFoamFix";
-    public override string Description => "Пена C-Foam не пролетает сквозь щели закрытых дверей.";
+    public override string Description => "C-foam doesn't fly through the gaps of closed doors.";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 

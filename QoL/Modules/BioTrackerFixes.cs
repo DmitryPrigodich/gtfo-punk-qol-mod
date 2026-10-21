@@ -8,14 +8,14 @@ using Player;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Два бага биотрекера:
-///  1) игрок с биотрекером «нуждается» в пополнении инструментов, и тиммейт тратит на него тул-рефилл впустую;
-///  2) после нескольких сканов метки врагов остаются висеть на экране.
+/// Two bio-tracker bugs:
+///  1) a player with a bio-tracker "needs" tool refill, and a teammate wastes a tool refill on them;
+///  2) after several scans enemy markers stay stuck on the screen.
 /// </summary>
 public class BioTrackerFixes : ModuleBase
 {
     public override string Id => "BioTrackerFixes";
-    public override string Description => "Биотрекер не съедает тул-рефилл, и старые метки сканера не висят на экране.";
+    public override string Description => "The bio-tracker doesn't eat tool refills, and old scanner markers don't stay on screen.";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 

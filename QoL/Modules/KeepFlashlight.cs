@@ -6,13 +6,13 @@ using SNetwork;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Баг игры: если выбросить предмет или поставить его (турель, мина и т.п.), фонарик выключается.
-/// Запоминаем состояние до действия и восстанавливаем после.
+/// Game bug: dropping an item or placing one (sentry, mine, etc.) turns the flashlight off.
+/// Remember the state before the action and restore it after.
 /// </summary>
 public class KeepFlashlight : ModuleBase
 {
     public override string Id => "KeepFlashlight";
-    public override string Description => "Фонарик не выключается, когда выбрасываешь или ставишь предмет.";
+    public override string Description => "The flashlight doesn't turn off when you drop or place an item.";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 

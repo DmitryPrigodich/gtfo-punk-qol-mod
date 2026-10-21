@@ -7,16 +7,16 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Расширяет штатный пинг (колёсико): если игра не нашла цель, можно пингануть
-///  - спящего врага вблизи (метка «враг»);
-///  - любую точку мира (метка «смотри сюда»).
-/// Штатные цели (предметы, двери, терминалы) по-прежнему обрабатывает игра.
-/// Пинги отправляются обычным способом — их видят все, даже без мода.
+/// Extends the stock ping (mouse wheel): if the game found no target, you can ping
+///  - a sleeping enemy nearby ("enemy" marker);
+///  - any point in the world ("look here" marker).
+/// Stock targets (items, doors, terminals) are still handled by the game.
+/// Pings are sent the normal way — everyone sees them, even without the mod.
 /// </summary>
 public class PingAnything : ModuleBase
 {
     public override string Id => "PingAnything";
-    public override string Description => "Пинг (колёсико) спящих врагов вблизи и любой точки мира, если игра не нашла цель.";
+    public override string Description => "Ping (mouse wheel) sleeping enemies nearby and any world point if the game found no target.";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.PingEverything };
 
@@ -26,9 +26,9 @@ public class PingAnything : ModuleBase
 
     protected override void OnBindConfig()
     {
-        _enemies = Bind("PingSleepingEnemies", true, "Пинговать спящих врагов.");
-        _enemyRange = Bind("SleepingEnemyRange", 12f, "Максимальная дистанция пинга спящего врага (м).");
-        _world = Bind("PingWorldPoint", true, "Пинговать любую точку (стена, пол), если цели нет.");
+        _enemies = Bind("PingSleepingEnemies", true, "Ping sleeping enemies.");
+        _enemyRange = Bind("SleepingEnemyRange", 12f, "Max ping distance to a sleeping enemy (m).");
+        _world = Bind("PingWorldPoint", true, "Ping any point (wall, floor) if there's no target.");
     }
 
     private const float VanillaRange = 40f;
@@ -39,17 +39,17 @@ public class PingAnything : ModuleBase
     {
         private static bool Prefix(LocalPlayerAgent __instance, bool __runOriginal)
         {
-            if (!__runOriginal) return false; // пинг уже обработал другой модуль (например, LockerItemPing)
+            if (!__runOriginal) return false; // the ping was already handled by another module (e.g. LockerItemPing)
             if (FocusStateManager.CurrentState != eFocusState.FPS) return true;
             if (!InputMapper.GetButtonDown.Invoke(InputAction.NavMarkerPing, __instance.InputFilter)) return true;
-            if (GuiManager.PlayerMarkerIsVisibleAndInFocus(__instance)) return true; // снятие своей метки — штатно
+            if (GuiManager.PlayerMarkerIsVisibleAndInFocus(__instance)) return true; // removing your own marker — stock
             if (Time.time < _cooldownUntil) return true;
 
             var cam = __instance.FPSCamera;
             if (cam == null) return true;
             Vector3 from = cam.Position, dir = cam.Forward;
 
-            // Есть штатная цель — пусть игра делает всё сама.
+            // There's a stock target — let the game handle it.
             if (Physics.Raycast(from, dir, out var hit, VanillaRange, LayerManager.MASK_PING_TARGET, QueryTriggerInteraction.Ignore)
                 && hit.collider.GetComponentInChildren<iPlayerPingTarget>() != null)
                 return true;

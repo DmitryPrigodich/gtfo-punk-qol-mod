@@ -6,14 +6,14 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Пока у тебя в руках пачка ресурсов, над всеми тиммейтами показывается их состояние
-/// (здоровье и патроны — штатная «доп. информация» метки игрока), а не только когда смотришь на них.
-/// Так сразу видно, кому нужнее.
+/// While you hold a resource pack, every teammate shows their status
+/// (health and ammo — the stock "extra info" of the player marker), not only when you look at them.
+/// So you see right away who needs it more.
 /// </summary>
 public class PackHelper : ModuleBase
 {
     public override string Id => "PackHelper";
-    public override string Description => "Пока держишь пачку ресурсов, над тиммейтами видно их здоровье и патроны.";
+    public override string Description => "While you hold a resource pack, teammates' health and ammo are shown above them.";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.PacksHelper };
 
@@ -47,7 +47,7 @@ public class PackHelper : ModuleBase
         }
     }
 
-    // Пока держим пачку, игра не должна прятать доп. информацию тиммейтов.
+    // While we hold a pack, the game must not hide teammates' extra info.
     [HarmonyPatch(typeof(PlaceNavMarkerOnGO), nameof(PlaceNavMarkerOnGO.SetExtraInfoVisible))]
     private static class Patch_SetExtraInfoVisible
     {

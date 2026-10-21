@@ -8,22 +8,22 @@ using UnityEngine;
 
 namespace GtfoPunk.QoL.Modules;
 
-/// <summary>В лобби клик по нику игрока открывает его профиль Steam (в оверлее Steam, если он включён).</summary>
+/// <summary>In the lobby, clicking a player's name opens their Steam profile (in the Steam overlay if enabled).</summary>
 public class SteamProfileLink : ModuleBase
 {
     public override string Id => "SteamProfileLink";
-    public override string Description => "Клик по нику игрока в лобби открывает его профиль Steam.";
+    public override string Description => "Clicking a player's name in the lobby opens their Steam profile.";
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
-    // Коллайдеры, которые мы повесили на ники: по ним определяем попадание курсора.
+    // Colliders we attached to the names: used to detect cursor hits.
     private static readonly Dictionary<int, CM_PlayerLobbyBar> _colliders = new();
 
     protected override void OnEnable() => FrameTicker.OnUpdate += SyncColliders;
 
     private static float _next;
 
-    /// <summary>Держим коллайдер ника по размеру текста (ник меняется, плюс к нему дописывается пинг).</summary>
+    /// <summary>Keep the name collider sized to the text (the name changes, plus the ping is appended).</summary>
     private static void SyncColliders()
     {
         if (Time.unscaledTime < _next) return;

@@ -6,18 +6,18 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// В ванилле пинг по открытому шкафчику/ящику всегда метит сам контейнер, даже если смотришь
-/// прямо на пачку внутри. Здесь, если за контейнером на луче есть предмет, пингуется предмет.
+/// In vanilla, pinging an open locker/box always marks the container itself, even if you look
+/// right at a pack inside. Here, if there's an item behind the container on the ray, the item gets pinged.
 /// </summary>
 public class LockerItemPing : ModuleBase
 {
     public override string Id => "LockerItemPing";
-    public override string Description => "Пинг предмета внутри открытого шкафчика/ящика, а не всего контейнера.";
+    public override string Description => "Ping the item inside an open locker/box instead of the whole container.";
     public override ModuleSide Side => ModuleSide.Client;
     public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
     private const float Range = 40f;
-    private const float LookThrough = 1.2f; // насколько дальше контейнера ищем предмет
+    private const float LookThrough = 1.2f; // how far past the container to look for an item
 
     private static bool IsContainerStyle(eNavMarkerStyle s) =>
         s == eNavMarkerStyle.PlayerPingResourceLocker || s == eNavMarkerStyle.PlayerPingResourceBox;
@@ -48,14 +48,14 @@ public class LockerItemPing : ModuleBase
                 bool container = IsContainerStyle(target.PingTargetStyle);
                 if (containerDist < 0f)
                 {
-                    if (!container) return true; // первая цель — не контейнер, штатный пинг справится
+                    if (!container) return true; // the first hit isn't a container, the stock ping will handle it
                     containerDist = h.distance;
                     continue;
                 }
                 if (h.distance > containerDist + LookThrough) break;
                 if (container) continue;
 
-                // Нашли предмет внутри контейнера — пингуем его.
+                // Found an item inside the container — ping it.
                 __instance.m_pingTarget = target;
                 __instance.m_pingPos = h.point;
                 if (target != __instance.m_lastPingedTarget || Clock.Time > __instance.m_pingAgainTimer)

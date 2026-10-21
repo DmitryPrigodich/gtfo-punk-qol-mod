@@ -7,14 +7,14 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// Пачки ресурсов и расходники, мимо которых прошёл ты или тиммейт (и видел их), получают метку
-/// с названием и количеством зарядов. Метка пропадает, когда предмет подобрали.
-/// Метки локальные: их видишь только ты, остальным ничего не отправляется.
+/// Resource packs and consumables that you or a teammate walked past (and saw) get a marker
+/// with the name and number of charges. The marker disappears once the item is picked up.
+/// Markers are local: only you see them, nothing is sent to others.
 /// </summary>
 public class ResourceAutoMark : ModuleBase
 {
     public override string Id => "ResourceAutoMark";
-    public override string Description => "Авто-метки ресурсов и расходников, которые нашёл ты или тиммейты (видишь только ты).";
+    public override string Description => "Auto markers on resources and consumables found by you or teammates (only you see them).";
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.ResourceHelper };
 
@@ -24,9 +24,9 @@ public class ResourceAutoMark : ModuleBase
 
     protected override void OnBindConfig()
     {
-        _discoverRadius = Bind("DiscoverRadius", 2.5f, "На каком расстоянии от игрока предмет считается найденным (м).");
-        _showDistance = Bind("ShowDistance", 30f, "Дальше этого расстояния метка скрывается (м).");
-        _consumables = Bind("MarkConsumables", true, "Помечать и расходники (пена, мины, светящиеся палочки и т.п.), а не только пачки ресурсов.");
+        _discoverRadius = Bind("DiscoverRadius", 2.5f, "Distance from a player at which an item counts as found (m).");
+        _showDistance = Bind("ShowDistance", 30f, "The marker is hidden beyond this distance (m).");
+        _consumables = Bind("MarkConsumables", true, "Also mark consumables (foam, mines, glow sticks, etc.), not only resource packs.");
     }
 
     private class Mark
@@ -69,7 +69,7 @@ public class ResourceAutoMark : ModuleBase
         foreach (var sync in PickupRegistry.Items)
         {
             if (_marks.ContainsKey(sync.GetInstanceID()) || !Wanted(sync) || !PickupRegistry.IsPlacedInLevel(sync)) continue;
-            // Предмет в закрытом шкафчике/ящике недоступен для взаимодействия — его не «нашли».
+            // An item in a closed locker/box can't be interacted with — it isn't "found".
             var interact = sync.GetComponentInChildren<Interact_Pickup_PickupItem>();
             if (interact == null || !interact.enabled || !interact.gameObject.activeInHierarchy) continue;
             Vector3 pos = sync.transform.position;
@@ -81,7 +81,7 @@ public class ResourceAutoMark : ModuleBase
                 Vector3 eye = p.EyePosition;
                 float d2 = (eye - pos).sqrMagnitude;
                 if (d2 > r2) continue;
-                // Рядом, и между игроком и предметом нет стены.
+                // Close by, and no wall between the player and the item.
                 if (d2 > 1.5f * 1.5f && Physics.Linecast(eye, pos, LayerManager.MASK_WORLD)) continue;
                 Add(sync);
                 break;
@@ -94,7 +94,7 @@ public class ResourceAutoMark : ModuleBase
         string name = sync.item.PublicName;
         if (PickupRegistry.SlotOf(sync) == InventorySlot.ResourcePack)
         {
-            // У пачек ammo хранит заряды по 20 единиц.
+            // For packs, ammo stores charges in units of 20.
             int uses = Mathf.FloorToInt(sync.GetCurrentState().custom.ammo / 20f);
             if (uses > 0) name += $" ×{uses}";
         }
