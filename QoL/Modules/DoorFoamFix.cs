@@ -1,5 +1,3 @@
-using GtfoPunk.Core;
-using HarmonyLib;
 using LevelGeneration;
 using UnityEngine;
 
@@ -14,7 +12,7 @@ public class DoorFoamFix : ModuleBase
     public override string Id => "DoorFoamFix";
     public override string Description => "C-foam doesn't fly through the gaps of closed doors.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
     [HarmonyPatch(typeof(LG_WeakDoor_Destruction), nameof(LG_WeakDoor_Destruction.Setup))]
     private static class Patch_Setup

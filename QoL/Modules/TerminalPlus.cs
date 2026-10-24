@@ -1,10 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using GtfoPunk.Core;
-using HarmonyLib;
 using LevelGeneration;
 using SNetwork;
 using UnityEngine;
@@ -29,7 +26,7 @@ public class TerminalPlus : ModuleBase
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { "io.takina.gtfo.BashTerm", "BashTerm", "Drummerx04.TerminalCompletionPlugin", "TerminalCompletion", "BetterTerminal" };
 
-    private static BepInEx.Configuration.ConfigEntry<bool> _aliases, _expand;
+    private static ConfigEntry<bool> _aliases, _expand;
 
     protected override void OnBindConfig()
     {
@@ -285,9 +282,12 @@ public class TerminalPlus : ModuleBase
     {
         if (ObjExact.TryGetValue(w, out var e)) return e;
         if (w.Contains('_')) return w; // already a full name
+        // Best: the word is the shorthand itself, or a beginning of the full name ("medi" → MEDIPACK).
         foreach (var (pre, full) in ObjPrefix)
-            if (w.StartsWith(pre, StringComparison.OrdinalIgnoreCase) && full.StartsWith(w, StringComparison.OrdinalIgnoreCase) || w.Equals(pre, StringComparison.OrdinalIgnoreCase))
+            if (w.Equals(pre, StringComparison.OrdinalIgnoreCase)
+                || (w.StartsWith(pre, StringComparison.OrdinalIgnoreCase) && full.StartsWith(w, StringComparison.OrdinalIgnoreCase)))
                 return full;
+        // Otherwise any shorthand the word starts with ("ammo" → AMMOPACK).
         foreach (var (pre, full) in ObjPrefix)
             if (w.StartsWith(pre, StringComparison.OrdinalIgnoreCase)) return full;
         return w;

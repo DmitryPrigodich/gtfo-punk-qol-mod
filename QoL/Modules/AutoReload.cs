@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using Gear;
-using GtfoPunk.Core;
 using Il2CppInterop.Runtime.InteropTypes;
 using UnityEngine;
 
@@ -17,8 +15,8 @@ public class AutoReload : ModuleBase
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { "Dinorush.AutoReloadPlus", "AutoReloadPlus", "AutoReload" };
 
-    private static BepInEx.Configuration.ConfigEntry<float> _delay;
-    private static BepInEx.Configuration.ConfigEntry<bool> _whileRunning;
+    private static ConfigEntry<float> _delay;
+    private static ConfigEntry<bool> _whileRunning;
 
     protected override void OnBindConfig()
     {

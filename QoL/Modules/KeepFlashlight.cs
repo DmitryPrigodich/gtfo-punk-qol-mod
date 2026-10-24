@@ -1,5 +1,3 @@
-using GtfoPunk.Core;
-using HarmonyLib;
 using Player;
 using SNetwork;
 
@@ -14,7 +12,7 @@ public class KeepFlashlight : ModuleBase
     public override string Id => "KeepFlashlight";
     public override string Description => "The flashlight doesn't turn off when you drop or place an item.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
     private static bool? _saved;
 

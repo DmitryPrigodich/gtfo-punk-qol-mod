@@ -1,6 +1,4 @@
 using AK;
-using GtfoPunk.Core;
-using HarmonyLib;
 
 namespace GtfoPunk.QoL.Modules;
 
@@ -10,7 +8,7 @@ public class ElevatorSkip : ModuleBase
     public override string Id => "ElevatorSkip";
     public override string Description => "Skip the elevator drop-in scene (seats, unbuckling).";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
     [HarmonyPatch(typeof(ElevatorRide), nameof(ElevatorRide.StartPreReleaseSequence))]
     private static class Patch_PreRelease
@@ -25,9 +23,9 @@ public class ElevatorVolume : ModuleBase
     public override string Id => "ElevatorVolume";
     public override string Description => "Quieter sounds during the elevator ride. Volume is set below.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
-    private static BepInEx.Configuration.ConfigEntry<float> _volume;
+    private static ConfigEntry<float> _volume;
     private static bool _focused = true;
     private static bool _applied;
 

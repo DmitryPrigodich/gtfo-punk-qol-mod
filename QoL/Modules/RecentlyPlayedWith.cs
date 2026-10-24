@@ -1,5 +1,3 @@
-using GtfoPunk.Core;
-using HarmonyLib;
 using SNetwork;
 using Steamworks;
 
@@ -11,7 +9,7 @@ public class RecentlyPlayedWith : ModuleBase
     public override string Id => "RecentlyPlayedWith";
     public override string Description => "Add lobby players to Steam's 'Recently played with' list.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
     private static void Mark(CSteamID id)
     {

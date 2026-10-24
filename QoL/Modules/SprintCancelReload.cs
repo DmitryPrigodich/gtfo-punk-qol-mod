@@ -1,5 +1,3 @@
-using GtfoPunk.Core;
-using HarmonyLib;
 using Player;
 
 namespace GtfoPunk.QoL.Modules;
@@ -13,7 +11,7 @@ public class SprintCancelReload : ModuleBase
     public override string Id => "SprintCancelReload";
     public override string Description => "Sprint cancels the reload (rounds aren't added, as with a normal cancel).";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
     private static void Check(PlayerAgent owner, bool crouching)
     {

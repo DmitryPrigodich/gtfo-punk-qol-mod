@@ -1,6 +1,4 @@
 using CellMenu;
-using GtfoPunk.Core;
-using HarmonyLib;
 
 namespace GtfoPunk.QoL.Modules;
 
@@ -11,7 +9,7 @@ public class SkipIntro : ModuleBase
     public override string Description => "Skip the intro at game start.";
     public override ModuleSide Side => ModuleSide.Client;
 
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[]
+    public override IReadOnlyList<string> ReplacedBy => new[]
     {
         "com.Shadsterwolf.SkipIntro", KnownMods.SkipIntro, KnownMods.QoLFix,
     };

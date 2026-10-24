@@ -1,8 +1,5 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using GtfoPunk.Core;
-using HarmonyLib;
 using UnityEngine;
 
 namespace GtfoPunk.QoL.Modules;
@@ -19,7 +16,7 @@ public class ScreenLiquidFilter : ModuleBase
     public override bool EnabledByDefault => false;
     public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
-    private static BepInEx.Configuration.ConfigEntry<bool> _enemyBlood, _playerBlood, _goo, _water, _disinfection, _infection;
+    private static ConfigEntry<bool> _enemyBlood, _playerBlood, _goo, _water, _disinfection, _infection;
 
     protected override void OnBindConfig()
     {

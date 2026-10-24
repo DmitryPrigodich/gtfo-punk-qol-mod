@@ -1,5 +1,4 @@
 using System;
-using GtfoPunk.Core;
 using UnityEngine;
 
 namespace GtfoPunk.QoL.Modules;
@@ -13,9 +12,9 @@ public class HudToggle : ModuleBase
     public override string Id => "HudToggle";
     public override string Description => "A key that hides the whole HUD for screenshots (F9 by default).";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { "HUDToggler" };
+    public override IReadOnlyList<string> ReplacedBy => new[] { "HUDToggler" };
 
-    private static BepInEx.Configuration.ConfigEntry<KeyCode> _key;
+    private static ConfigEntry<KeyCode> _key;
     private static bool _hidden;
 
     protected override void OnBindConfig()

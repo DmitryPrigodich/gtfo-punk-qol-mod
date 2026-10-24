@@ -1,5 +1,3 @@
-using GtfoPunk.Core;
-using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes;
 using LevelGeneration;
 using Localization;
@@ -19,9 +17,9 @@ public class ReturnToLocker : ModuleBase
     public override string Id => "ReturnToLocker";
     public override string Description => "Put a resource pack or consumable back into an open locker/box (hold E).";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.DropItem, KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.DropItem, KnownMods.QoLFix };
 
-    private static BepInEx.Configuration.ConfigEntry<float> _holdTime;
+    private static ConfigEntry<float> _holdTime;
 
     protected override void OnBindConfig()
     {
@@ -31,11 +29,17 @@ public class ReturnToLocker : ModuleBase
     private const float Reach = 1.8f;
     private const float SlotOccupiedRadius = 0.25f;
 
+    private const float SearchInterval = 0.1f; // the container search (raycasts, slot checks) runs at 10 Hz, not every frame
+
     private static bool _active;          // our prompt is shown right now
     private static float _holdProgress;
     private static bool _waitRelease;     // after a successful action, wait for E to be released
     private static Transform _target;
     private static LG_ResourceContainer_Storage _storage;
+    private static float _nextSearch;
+    private static bool _found;
+    private static ItemEquippable _foundItem;
+    private static InventorySlot _foundSlot;
 
     protected override void OnEnable()
     {
@@ -46,13 +50,22 @@ public class ReturnToLocker : ModuleBase
     private static void Reset()
     {
         if (_active) HidePrompt();
-        _active = false; _holdProgress = 0; _target = null; _storage = null;
+        _active = false; _holdProgress = 0; _target = null; _storage = null; _found = false; _foundItem = null;
     }
 
     private static void Tick()
     {
-        bool can = TryFindTarget(out var item, out var slot);
-        if (!can)
+        if (Time.time >= _nextSearch)
+        {
+            _nextSearch = Time.time + SearchInterval;
+            _found = TryFindTarget(out _foundItem, out _foundSlot);
+        }
+        // Things that can change between searches: focus (map, menu) and the item in hand.
+        if (_found && (FocusStateManager.CurrentState != eFocusState.FPS
+                       || GameUtil.LocalAgent?.Inventory?.WieldedItem?.Pointer != _foundItem?.Pointer)) _found = false;
+        var item = _foundItem;
+        var slot = _foundSlot;
+        if (!_found)
         {
             if (_active) { HidePrompt(); _active = false; }
             _holdProgress = 0;
@@ -99,10 +112,7 @@ public class ReturnToLocker : ModuleBase
         if (cam == null) return false;
 
         // Find the nearest container on the view ray.
-        var raw = Physics.RaycastAll(cam.Position, cam.Forward, Reach, ~0, QueryTriggerInteraction.Collide);
-        var hits = new RaycastHit[raw.Length];
-        for (int i = 0; i < raw.Length; i++) hits[i] = raw[i];
-        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        var hits = GameUtil.RaycastAllSorted(cam.Position, cam.Forward, Reach, ~0, QueryTriggerInteraction.Collide);
         LG_WeakResourceContainer container = null;
         Vector3 hitPoint = default;
         foreach (var h in hits)
@@ -142,16 +152,15 @@ public class ReturnToLocker : ModuleBase
         return true;
     }
 
-    private static bool IsOccupied(StorageSlot s)
-    {
-        foreach (var t in new[] { s.ResourcePack, s.Consumable, s.CommoditySmall, s.CommodityMedium, s.CommodityLarge, s.Keycard })
-            if (t != null && PickupRegistry.AnyPlacedNear(t.position, SlotOccupiedRadius)) return true;
-        return false;
-    }
+    private static bool IsOccupied(StorageSlot s) =>
+        Near(s.ResourcePack) || Near(s.Consumable) || Near(s.CommoditySmall) || Near(s.CommodityMedium) || Near(s.CommodityLarge) || Near(s.Keycard);
+
+    private static bool Near(Transform t) => t != null && PickupRegistry.AnyPlacedNear(t.position, SlotOccupiedRadius);
 
     private static void Place(ItemEquippable item, InventorySlot slot)
     {
         if (_target == null || _storage == null) return;
+        _found = false; // search again after placing
         if (!PlayerBackpackManager.TryGetItemInLevelFromItemData(item.Get_pItemData(), out Item lvlItem) || lvlItem == null) return;
         var inLevel = ((Il2CppObjectBase)lvlItem).TryCast<ItemInLevel>();
         var sync = inLevel?.GetSyncComponent();

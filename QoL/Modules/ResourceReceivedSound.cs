@@ -1,7 +1,5 @@
 using AK;
 using Gear;
-using GtfoPunk.Core;
-using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes;
 using Player;
 using SNetwork;
@@ -19,9 +17,9 @@ public class ResourceReceivedSound : ModuleBase
     public override string Id => "ResourceReceivedSound";
     public override string Description => "A sound when a teammate gave you ammo or healed you.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
-    private static BepInEx.Configuration.ConfigEntry<float> _minHeal;
+    private static ConfigEntry<float> _minHeal;
 
     protected override void OnBindConfig()
     {

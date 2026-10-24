@@ -1,5 +1,3 @@
-using GtfoPunk.Core;
-using HarmonyLib;
 using Player;
 
 namespace GtfoPunk.QoL.Modules;
@@ -14,7 +12,7 @@ public class DmrReloadFix : ModuleBase
     public override string Id => "DmrReloadFix";
     public override string Description => "Fix for the magazine not filling completely (DMR bug with one round left).";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { "DMRReloadFix" };
+    public override IReadOnlyList<string> ReplacedBy => new[] { "DMRReloadFix" };
 
     private static bool _inner;
 

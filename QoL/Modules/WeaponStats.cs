@@ -1,12 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using CellMenu;
 using GameData;
 using Gear;
-using GtfoPunk.Core;
-using HarmonyLib;
 using Player;
 
 namespace GtfoPunk.QoL.Modules;
@@ -23,7 +20,7 @@ public class WeaponStats : ModuleBase
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { "WeaponStatShower", "DescriptiveWeaponStatShower" };
 
-    private static BepInEx.Configuration.ConfigEntry<bool> _hitsToKill;
+    private static ConfigEntry<bool> _hitsToKill;
 
     protected override void OnBindConfig()
     {

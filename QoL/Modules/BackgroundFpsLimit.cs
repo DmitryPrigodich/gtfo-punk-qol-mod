@@ -1,5 +1,3 @@
-using GtfoPunk.Core;
-using HarmonyLib;
 using UnityEngine;
 
 namespace GtfoPunk.QoL.Modules;
@@ -10,9 +8,9 @@ public class BackgroundFpsLimit : ModuleBase
     public override string Id => "BackgroundFpsLimit";
     public override string Description => "Limit FPS when the game is minimized/out of focus. Doesn't work with V-Sync on.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
-    private static BepInEx.Configuration.ConfigEntry<int> _fps;
+    private static ConfigEntry<int> _fps;
     private static bool _warned;
 
     protected override void OnBindConfig()

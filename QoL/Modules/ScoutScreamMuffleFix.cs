@@ -1,6 +1,4 @@
 using AK;
-using GtfoPunk.Core;
-using HarmonyLib;
 using UnityEngine;
 
 namespace GtfoPunk.QoL.Modules;
@@ -15,7 +13,7 @@ public class ScoutScreamMuffleFix : ModuleBase
     public override string Id => "ScoutScreamMuffleFix";
     public override string Description => "Sound doesn't stay muffled after a scout scream (and after leaving to the lobby).";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
     private const float ResetDelay = 15f;
     private static float _resetAt = -1f;

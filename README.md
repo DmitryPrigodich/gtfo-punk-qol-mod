@@ -17,10 +17,13 @@ Zip from releases → r2modman → *Settings → Import local mod*. Requires Bep
 
 ## Layout
 - `Shared/Core` — the shared GtfoPunk core (identical in both repositories): modules with individual config toggles, Client/Host/Everyone marking, auto-disable when a mod with the same feature is installed, en/ru in-game language.
-- `QoL/Modules` — one file per feature.
+- `QoL/Modules` — one file per feature (closely related small features share a file: `ElevatorTweaks.cs`, `ScreenEffects.cs`).
+- `QoL/GlobalUsings.cs` — usings every module needs (`GtfoPunk.Core`, `HarmonyLib`, `BepInEx.Configuration`, collections).
 - `packaging/QoL` — manifest, README, CHANGELOG, package icon.
 
 ## Conventions
+- A module = one class deriving from `ModuleBase`: Id (also the config section), Description, Side; Harmony patches as nested `[HarmonyPatch]` classes; per-frame work via `FrameTicker.OnUpdate` with its own throttle — no MonoBehaviours, no scene searches every frame.
+- Config keys are never renamed silently: changing a default means a new key name (…2), so players' saved values aren't lost or misread.
 - Code comments, config descriptions and log messages are in English. Russian lives only in localization (`Lang.T(en, ru)`) and in the Russian section of the player README.
 
 Related repository: gtfo-punk-rules-mod (gameplay changes).

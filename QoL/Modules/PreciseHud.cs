@@ -1,6 +1,4 @@
 using System.Globalization;
-using GtfoPunk.Core;
-using HarmonyLib;
 using Player;
 using UnityEngine;
 
@@ -17,9 +15,9 @@ public class PreciseHud : ModuleBase
     public override string Id => "PreciseHud";
     public override string Description => "Exact numbers on the HUD: health with tenths and in HP, tool charges, teammates' health/infection on the map.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { "Andocas.PreciseUI", "PreciseUI" };
+    public override IReadOnlyList<string> ReplacedBy => new[] { "Andocas.PreciseUI", "PreciseUI" };
 
-    private static BepInEx.Configuration.ConfigEntry<bool> _health, _tool, _map;
+    private static ConfigEntry<bool> _health, _tool, _map;
 
     protected override void OnBindConfig()
     {

@@ -1,5 +1,3 @@
-using GtfoPunk.Core;
-using HarmonyLib;
 
 namespace GtfoPunk.QoL.Modules;
 
@@ -12,7 +10,7 @@ public class WeaponAnimFix : ModuleBase
     public override string Id => "WeaponAnimFix";
     public override string Description => "The reload animation doesn't carry over to another weapon on a quick switch.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
     private static bool Local(ItemEquippable item)
     {

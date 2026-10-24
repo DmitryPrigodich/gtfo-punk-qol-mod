@@ -37,7 +37,6 @@ Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rul
 | ScreenLiquidFilter | Hides blood/goo/etc. on screen, per category. **Off by default.** |
 | NoiseRemoval | Removes the blue-noise grain overlay. **Off by default.** |
 | WeaponStats | Weapon stats in the loadout: damage, mag, reserve, fire rate, reload, multipliers, spread, hits-to-kill. |
-| LoadoutPresets | Lobby: F5–F8 equip preset 1–4, Shift+F5–F8 save the current loadout. |
 | TerminalPlus | Linux-style terminal: `ls`, `cat`, `clear`, `p am 69`, `ls \| grep ammo`, `!!`, `history`, Ctrl+L/C/U/V/R. |
 | PreciseHud | Health with decimals and HP, tool charges, teammates' health/infection on the map. |
 | HudToggle | F9 hides the whole HUD (screenshots). |

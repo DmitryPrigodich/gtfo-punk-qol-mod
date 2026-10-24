@@ -1,5 +1,3 @@
-using GtfoPunk.Core;
-using HarmonyLib;
 using Player;
 using UnityEngine;
 
@@ -14,7 +12,7 @@ public class LockerItemPing : ModuleBase
     public override string Id => "LockerItemPing";
     public override string Description => "Ping the item inside an open locker/box instead of the whole container.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
     private const float Range = 40f;
     private const float LookThrough = 1.2f; // how far past the container to look for an item
@@ -34,11 +32,7 @@ public class LockerItemPing : ModuleBase
             var cam = __instance.FPSCamera;
             if (cam == null) return true;
 
-            var raw = Physics.RaycastAll(cam.Position, cam.Forward, Range, LayerManager.MASK_PING_TARGET, QueryTriggerInteraction.Ignore);
-            var hits = new RaycastHit[raw.Length];
-            for (int i = 0; i < raw.Length; i++) hits[i] = raw[i];
-            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-
+            var hits = GameUtil.RaycastAllSorted(cam.Position, cam.Forward, Range, LayerManager.MASK_PING_TARGET);
             float containerDist = -1f;
             foreach (var h in hits)
             {

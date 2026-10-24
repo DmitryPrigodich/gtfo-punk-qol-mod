@@ -1,7 +1,4 @@
-using System.Collections.Generic;
 using CellMenu;
-using GtfoPunk.Core;
-using HarmonyLib;
 using SNetwork;
 using Steamworks;
 using UnityEngine;
@@ -26,7 +23,7 @@ public class SteamProfileLink : ModuleBase
     /// <summary>Keep the name collider sized to the text (the name changes, plus the ping is appended).</summary>
     private static void SyncColliders()
     {
-        if (Time.unscaledTime < _next) return;
+        if (Time.unscaledTime < _next || GameUtil.InLevel) return; // names are only clickable in the lobby
         _next = Time.unscaledTime + 0.5f;
         var bars = CM_PlayerLobbyBar.instances;
         if (bars == null) return;

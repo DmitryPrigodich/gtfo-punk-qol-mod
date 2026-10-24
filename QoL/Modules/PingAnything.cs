@@ -1,6 +1,4 @@
 using Enemies;
-using GtfoPunk.Core;
-using HarmonyLib;
 using Player;
 using UnityEngine;
 
@@ -18,11 +16,11 @@ public class PingAnything : ModuleBase
     public override string Id => "PingAnything";
     public override string Description => "Ping (mouse wheel) sleeping enemies nearby and any world point if the game found no target.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.PingEverything };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.PingEverything };
 
-    private static BepInEx.Configuration.ConfigEntry<bool> _enemies;
-    private static BepInEx.Configuration.ConfigEntry<float> _enemyRange;
-    private static BepInEx.Configuration.ConfigEntry<bool> _world;
+    private static ConfigEntry<bool> _enemies;
+    private static ConfigEntry<float> _enemyRange;
+    private static ConfigEntry<bool> _world;
 
     protected override void OnBindConfig()
     {

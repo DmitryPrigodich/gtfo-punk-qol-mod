@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
 using CellMenu;
-using GtfoPunk.Core;
-using HarmonyLib;
 using SNetwork;
 using Steamworks;
 using UnityEngine;
@@ -22,9 +19,9 @@ public class PingDisplay : ModuleBase
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix, "ModList" };
 
-    private static BepInEx.Configuration.ConfigEntry<bool> _inLobby;
-    private static BepInEx.Configuration.ConfigEntry<bool> _inHud;
-    private static BepInEx.Configuration.ConfigEntry<float> _interval;
+    private static ConfigEntry<bool> _inLobby;
+    private static ConfigEntry<bool> _inHud;
+    private static ConfigEntry<float> _interval;
 
     protected override void OnBindConfig()
     {
@@ -101,7 +98,7 @@ public class PingDisplay : ModuleBase
     {
         if (Time.unscaledTime < _nextUpdate) return;
         _nextUpdate = Time.unscaledTime + Mathf.Max(0.1f, _interval.Value);
-        if (_inLobby.Value) UpdateLobby();
+        if (_inLobby.Value && !GameUtil.InLevel) UpdateLobby();
         if (_inHud.Value) UpdateHud();
     }
 

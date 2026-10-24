@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0
+- Removed **LoadoutPresets** (F5–F8 loadout presets) — little real use for the code it took. Its file `BepInEx/config/GtfoPunk.LoadoutPresets.json` can be deleted.
+- Removed the **StatusInChat** test module (it was off by default).
+- Code cleanup, no behaviour changes otherwise:
+  - ReturnToLocker looks for the container 10 times a second instead of every frame while you hold a pack or consumable;
+  - ResourceAutoMark checks distance first and does the expensive checks only for items near a player;
+  - PingDisplay and SteamProfileLink no longer update lobby name tags while you're in a level;
+  - the "UNREADY" button text is localized;
+  - shared helpers (sorted raycasts), common usings, unused core code removed.
+
 ## 0.6.3
 - New **InstantReady**: the lobby Ready button works on a single click instead of press-and-hold. Option InstantDrop makes the host's drop button instant too (off by default).
 - **ElevatorSkip** is now on by default (existing configs keep their own value).

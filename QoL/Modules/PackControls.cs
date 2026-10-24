@@ -1,6 +1,4 @@
 using Gear;
-using GtfoPunk.Core;
-using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes;
 using Localization;
 using Player;
@@ -20,7 +18,7 @@ public class PackControls : ModuleBase
     public override string Id => "PackControls";
     public override string Description => "Pack: E — on target or yourself, LMB — on yourself, RMB — on the teammate you look at.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.PacksHelper };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.PacksHelper };
 
     private const float GiveRange = 2.4f;
 

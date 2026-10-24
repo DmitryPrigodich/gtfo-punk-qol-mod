@@ -1,6 +1,4 @@
 using CellMenu;
-using GtfoPunk.Core;
-using HarmonyLib;
 
 namespace GtfoPunk.QoL.Modules;
 
@@ -15,7 +13,7 @@ public class InstantReady : ModuleBase
     public override string Description => "Lobby Ready on a single click instead of holding the mouse button.";
     public override ModuleSide Side => ModuleSide.Client;
 
-    private static BepInEx.Configuration.ConfigEntry<bool> _drop;
+    private static ConfigEntry<bool> _drop;
 
     protected override void OnBindConfig()
     {

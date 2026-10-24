@@ -13,7 +13,7 @@ public class Plugin : BasePlugin
 {
     public const string GUID = "AmDDRed.GtfoPunk.QoL";
     public const string NAME = "GtfoPunk QoL";
-    public const string VERSION = "0.6.3";
+    public const string VERSION = "0.7.0";
 
     public override void Load() => ModInfo.Start(GUID, NAME, VERSION, Config, Log);
 }

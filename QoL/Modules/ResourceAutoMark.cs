@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using GtfoPunk.Core;
 using LevelGeneration;
 using Player;
 using UnityEngine;
@@ -18,9 +16,9 @@ public class ResourceAutoMark : ModuleBase
     public override ModuleSide Side => ModuleSide.Client;
     public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.ResourceHelper };
 
-    private static BepInEx.Configuration.ConfigEntry<float> _discoverRadius;
-    private static BepInEx.Configuration.ConfigEntry<float> _showDistance;
-    private static BepInEx.Configuration.ConfigEntry<bool> _consumables;
+    private static ConfigEntry<float> _discoverRadius;
+    private static ConfigEntry<float> _showDistance;
+    private static ConfigEntry<bool> _consumables;
 
     protected override void OnBindConfig()
     {
@@ -38,6 +36,7 @@ public class ResourceAutoMark : ModuleBase
     }
 
     private static readonly Dictionary<int, Mark> _marks = new();
+    private static readonly List<Vector3> _eyes = new();
     private static float _nextScan, _nextRefresh;
 
     protected override void OnEnable()
@@ -66,23 +65,32 @@ public class ResourceAutoMark : ModuleBase
         if (players == null) return;
         float r = _discoverRadius.Value, r2 = r * r;
 
+        // Player eyes once per scan; items are checked cheapest-first (distance), the expensive checks only for items in reach.
+        _eyes.Clear();
+        for (int i = 0; i < players.Count; i++)
+        {
+            var p = players[i];
+            if (p != null && p.Alive) _eyes.Add(p.EyePosition);
+        }
+        if (_eyes.Count == 0) return;
+
         foreach (var sync in PickupRegistry.Items)
         {
-            if (_marks.ContainsKey(sync.GetInstanceID()) || !Wanted(sync) || !PickupRegistry.IsPlacedInLevel(sync)) continue;
+            if (_marks.ContainsKey(sync.GetInstanceID())) continue;
+            Vector3 pos = sync.transform.position;
+            int seenBy = -1;
+            for (int i = 0; i < _eyes.Count; i++)
+                if ((_eyes[i] - pos).sqrMagnitude <= r2) { seenBy = i; break; }
+            if (seenBy < 0 || !Wanted(sync) || !PickupRegistry.IsPlacedInLevel(sync)) continue;
             // An item in a closed locker/box can't be interacted with — it isn't "found".
             var interact = sync.GetComponentInChildren<Interact_Pickup_PickupItem>();
             if (interact == null || !interact.enabled || !interact.gameObject.activeInHierarchy) continue;
-            Vector3 pos = sync.transform.position;
-
-            for (int i = 0; i < players.Count; i++)
+            // Close by, and no wall between a player and the item.
+            for (int i = seenBy; i < _eyes.Count; i++)
             {
-                var p = players[i];
-                if (p == null || !p.Alive) continue;
-                Vector3 eye = p.EyePosition;
-                float d2 = (eye - pos).sqrMagnitude;
+                float d2 = (_eyes[i] - pos).sqrMagnitude;
                 if (d2 > r2) continue;
-                // Close by, and no wall between the player and the item.
-                if (d2 > 1.5f * 1.5f && Physics.Linecast(eye, pos, LayerManager.MASK_WORLD)) continue;
+                if (d2 > 1.5f * 1.5f && Physics.Linecast(_eyes[i], pos, LayerManager.MASK_WORLD)) continue;
                 Add(sync);
                 break;
             }

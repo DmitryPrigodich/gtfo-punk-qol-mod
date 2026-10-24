@@ -1,7 +1,5 @@
 using Enemies;
 using Gear;
-using GtfoPunk.Core;
-using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes;
 using Player;
 
@@ -17,7 +15,7 @@ public class BioTrackerFixes : ModuleBase
     public override string Id => "BioTrackerFixes";
     public override string Description => "The bio-tracker doesn't eat tool refills, and old scanner markers don't stay on screen.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
 
     private static bool HasBioTracker(PlayerAgent agent)
     {

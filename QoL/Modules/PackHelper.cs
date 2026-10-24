@@ -1,5 +1,3 @@
-using GtfoPunk.Core;
-using HarmonyLib;
 using Player;
 using UnityEngine;
 
@@ -15,7 +13,7 @@ public class PackHelper : ModuleBase
     public override string Id => "PackHelper";
     public override string Description => "While you hold a resource pack, teammates' health and ammo are shown above them.";
     public override ModuleSide Side => ModuleSide.Client;
-    public override System.Collections.Generic.IReadOnlyList<string> ReplacedBy => new[] { KnownMods.PacksHelper };
+    public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.PacksHelper };
 
     private static bool _holdingPack;
     private static float _next;
