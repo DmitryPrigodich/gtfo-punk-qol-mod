@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using CellMenu;
-using DropServer;
 using GameData;
 using GtfoPunk.QoL.Core;
 using Il2CppInterop.Runtime;
@@ -14,7 +13,7 @@ namespace GtfoPunk.QoL.Modules;
 /// ARCHIVE button on the rundown screen (a copy of the CREDITS button): opens a terminal-like screen with the
 /// terminal logs of the expeditions you've completed in the current rundown — read them again without replaying.
 /// Mouse (the game cursor): click a line to open it, right click / Backspace — back, wheel — scroll, Esc — close.
-/// Keyboard: ↑/↓, Enter. Client-side, reads only the game data and your own progression.
+/// Keyboard: ↑/↓, Enter. Client-side, reads only the game data and what the rundown screen shows.
 /// </summary>
 public class TerminalArchive : ModuleBase
 {
@@ -29,7 +28,7 @@ public class TerminalArchive : ModuleBase
     protected override void OnBindConfig()
     {
         _showAll = Bind("ShowUncompleted", false, "Also open the logs of expeditions you haven't completed (spoilers!).");
-        _otherLayers = Bind("SecondaryLayersEnteredOnly", true, "Logs of the secondary / overload layers only once you've entered that layer.");
+        _otherLayers = Bind("SecondaryLayers", true, "Also list the logs of the secondary / overload layers of a completed expedition.");
         _placement = Bind("ButtonPlacement", "Auto", "Where the ARCHIVE button goes relative to CREDITS: Auto, Right, Left, Above, Below.");
         _fontScale = Bind("FontScale", 1f, "Text size on the archive screen.");
     }
@@ -54,66 +53,37 @@ public class TerminalArchive : ModuleBase
     private static readonly List<Exp> _exps = new();
     private static readonly Regex Tags = new("<[^>]*>");
 
+    /// <summary>The expeditions as the rundown screen shows them (its icons know the tier, the index and whether it's finished).</summary>
     private static void Build(CM_PageRundown_New page)
     {
         _exps.Clear();
-        var rd = page?.m_currentRundownData;
-        if (rd == null)
+        var icons = page?.m_expIconsAll;
+        if (icons == null || icons.Count == 0) { ModInfo.Log.LogWarning("[Archive] no expeditions on the rundown screen"); return; }
+        var seen = new HashSet<string>();
+        for (int i = 0; i < icons.Count; i++)
         {
-            try
-            {
-                var key = RundownManager.ActiveRundownKey ?? "";
-                var m = Regex.Match(key, @"(\d+)\s*$");
-                if (m.Success) rd = GameDataBlockBase<RundownDataBlock>.GetBlock(uint.Parse(m.Groups[1].Value));
-            }
-            catch { }
-        }
-        if (rd == null) { ModInfo.Log.LogWarning("[Archive] no rundown data"); return; }
-        RundownProgression prog = null;
-        try { prog = RundownManager.RundownProgression; } catch { }
-
-        AddTier(rd.TierA, eRundownTier.TierA, "A", prog);
-        AddTier(rd.TierB, eRundownTier.TierB, "B", prog);
-        AddTier(rd.TierC, eRundownTier.TierC, "C", prog);
-        AddTier(rd.TierD, eRundownTier.TierD, "D", prog);
-        AddTier(rd.TierE, eRundownTier.TierE, "E", prog);
-        ModInfo.Log.LogInfo($"[Archive] rundown '{rd.name}': {_exps.Count} expeditions, {_exps.Count(e => e.Done)} completed, "
-            + $"{_exps.Where(e => e.Open).Sum(e => e.Logs.Count)} logs open (progression {(prog != null ? "read" : "not available")})");
-    }
-
-    private static void AddTier(Il2CppSystem.Collections.Generic.List<ExpeditionInTierData> list, eRundownTier tier, string letter, RundownProgression prog)
-    {
-        if (list == null) return;
-        for (int i = 0; i < list.Count; i++)
-        {
-            var d = list[i];
-            if (d == null || !d.Enabled) continue;
-            var desc = d.Descriptive;
+            var icon = icons[i];
+            var d = icon?.DataBlock;
+            if (d == null) continue;
+            string code = Tags.Replace(icon.ShortName ?? "", "").Trim();
+            if (code.Length == 0) code = (d.Descriptive?.Prefix ?? "") + icon.Tier.ToString().Replace("Tier", "") + (icon.ExpIndex + 1);
+            if (!seen.Add(code)) continue;
+            var status = icon.Status;
             var exp = new Exp
             {
-                Code = (desc?.Prefix ?? "") + letter + (desc != null && desc.SkipExpNumberInName ? "" : (i + 1).ToString()),
-                Name = desc?.PublicName ?? "?",
+                Code = code,
+                Name = Tags.Replace(icon.PublicName ?? d.Descriptive?.PublicName ?? "?", "").Trim(),
+                Done = status == eExpeditionIconStatus.PlayedAndFinished || status == eExpeditionIconStatus.TierLockedFinishedAnyway,
             };
-            LayerProgressionState main = LayerProgressionState.Undiscovered, second = main, third = main;
-            try
-            {
-                string key = RundownManager.GetRundownProgressionExpeditionKey(tier, i);
-                if (prog?.Expeditions != null && key != null && prog.Expeditions.ContainsKey(key))
-                {
-                    var e = prog.Expeditions[key];
-                    var layers = e.Layers;
-                    main = layers.Main.State; second = layers.Secondary.State; third = layers.Third.State;
-                    exp.Done = main == LayerProgressionState.Completed || layers.Main.CompletionCount > 0;
-                }
-            }
-            catch (Exception ex) { ModInfo.Log.LogWarning($"[Archive] progression of {exp.Code}: {ex.Message}"); }
-
             AddLayout(exp, d.LevelLayoutData, "MAIN");
-            bool all = _showAll.Value || !_otherLayers.Value;
-            if (d.SecondaryLayerEnabled && (all || second >= LayerProgressionState.Entered)) AddLayout(exp, d.SecondaryLayout, "SECONDARY");
-            if (d.ThirdLayerEnabled && (all || third >= LayerProgressionState.Entered)) AddLayout(exp, d.ThirdLayout, "OVERLOAD");
+            if (_otherLayers.Value)
+            {
+                if (d.SecondaryLayerEnabled) AddLayout(exp, d.SecondaryLayout, "SECONDARY");
+                if (d.ThirdLayerEnabled) AddLayout(exp, d.ThirdLayout, "OVERLOAD");
+            }
             _exps.Add(exp);
         }
+        ModInfo.Log.LogInfo($"[Archive] rundown screen: {_exps.Count} expeditions, {_exps.Count(e => e.Done)} completed, {_exps.Where(e => e.Open).Sum(e => e.Logs.Count)} logs open");
     }
 
     private static void AddLayout(Exp exp, uint layoutId, string layer)
@@ -160,32 +130,58 @@ public class TerminalArchive : ModuleBase
         catch { return null; }
     }
 
+    private static float _readySince = -1f, _nextSync;
+
     private static void Tick()
     {
         var page = Page();
-        if (page == null) { if (_open) Close(); return; }
+        if (page == null) { if (_open) Close(); _readySince = -1f; return; }
         EnsureButton(page);
-        if (_btnItem != null && _btnItem.m_texts != null && _btnItem.m_texts.Length > 0)
+        if (_btn != null && Time.time >= _nextSync)
         {
-            string label = Lang.T("ARCHIVE", "АРХИВ");
-            var t = _btnItem.m_texts[0];
-            if (t != null && t.text != label) t.SetText(label);
+            _nextSync = Time.time + 0.5f;
+            // Shown only while CREDITS is (the game hides it during the intro and the rundown reveal).
+            var src = page.m_creditsButton;
+            bool show = src != null && src.gameObject.activeSelf;
+            if (_btn.activeSelf != show) _btn.SetActive(show);
+            if (show && _btnItem != null && _btnItem.m_texts != null && _btnItem.m_texts.Length > 0)
+            {
+                string label = Lang.T("ARCHIVE", "АРХИВ");
+                var t = _btnItem.m_texts[0];
+                if (t != null && t.text != label) t.SetText(label);
+            }
         }
         if (_open) Input_(page);
+    }
+
+    /// <summary>The rundown screen is fully up: CREDITS visible and the expedition icons placed, for a couple of seconds.</summary>
+    private static bool Ready(CM_PageRundown_New page)
+    {
+        bool now = false;
+        try
+        {
+            var src = page.m_creditsButton;
+            now = page.m_dataIsSetup && src != null && src.gameObject.activeInHierarchy
+                && page.m_expIconsAll != null && page.m_expIconsAll.Count > 0
+                && LocalBox(src.gameObject, src.transform.parent).size != Vector3.zero;
+        }
+        catch { }
+        if (!now) { _readySince = -1f; return false; }
+        if (_readySince < 0f) _readySince = Time.time;
+        return Time.time - _readySince >= 2f;
     }
 
     private static void EnsureButton(CM_PageRundown_New page)
     {
         if (_btn != null && _btnPage == page) return;
         if (Time.time < _nextTry) return;
-        _nextTry = Time.time + 3f;
+        _nextTry = Time.time + 0.5f;
+        if (!Ready(page)) return;
         var src = page.m_creditsButton;
-        if (src == null) { ModInfo.Log.LogWarning("[Archive] CREDITS button not found"); return; }
         if (_btn != null) UnityEngine.Object.Destroy(_btn);
         var parent = src.transform.parent;
         _btn = UnityEngine.Object.Instantiate(src.gameObject, parent, false);
         _btn.name = "GtfoPunk_ArchiveButton";
-        _btn.SetActive(true);
         _btnItem = _btn.GetComponent<CM_Item>();
         if (_btnItem == null) { UnityEngine.Object.Destroy(_btn); _btn = null; return; }
         try { _btnItem.SetupCMItem(); } catch { }
@@ -238,13 +234,6 @@ public class TerminalArchive : ModuleBase
         return b;
     }
 
-    /// <summary>While the archive is open, the game's own buttons under it don't react to clicks.</summary>
-    [HarmonyPatch(typeof(CM_Item), nameof(CM_Item.OnBtnPress))]
-    private static class Patch_Press
-    {
-        private static bool Prefix(CM_Item __instance) => !_open || (__instance != null && __instance.gameObject == _btn);
-    }
-
     // ---------- the screen: 0 — expeditions, 1 — logs of one, 2 — a log ----------
 
     private static int _level, _exp, _log, _sel, _scroll, _hover = -1;
@@ -263,12 +252,40 @@ public class TerminalArchive : ModuleBase
         Overlay.Ensure();
         Overlay.OnDraw -= Draw;
         Overlay.OnDraw += Draw;
+        BlockPage(true);
     }
 
     private static void Close()
     {
         _open = false;
         Overlay.OnDraw -= Draw;
+        BlockPage(false);
+    }
+
+    private static readonly List<Collider> _off3d = new();
+    private static readonly List<Collider2D> _off2d = new();
+
+    /// <summary>While the archive is open the rundown screen's buttons under it can't be hit (their colliders are off), except ARCHIVE.</summary>
+    private static void BlockPage(bool block)
+    {
+        try
+        {
+            if (!block)
+            {
+                foreach (var c in _off3d) if (c != null) c.enabled = true;
+                foreach (var c in _off2d) if (c != null) c.enabled = true;
+                _off3d.Clear(); _off2d.Clear();
+                return;
+            }
+            var page = _btnPage ?? Page();
+            if (page == null) return;
+            foreach (var c in page.GetComponentsInChildren<Collider>(false))
+                if (c != null && c.enabled && (_btn == null || !c.transform.IsChildOf(_btn.transform))) { c.enabled = false; _off3d.Add(c); }
+            foreach (var c in page.GetComponentsInChildren<Collider2D>(false))
+                if (c != null && c.enabled && (_btn == null || !c.transform.IsChildOf(_btn.transform))) { c.enabled = false; _off2d.Add(c); }
+            ModInfo.Log.LogInfo($"[Archive] rundown screen buttons paused: {_off3d.Count + _off2d.Count}");
+        }
+        catch (Exception e) { ModInfo.Log.LogWarning($"[Archive] pause buttons: {e.Message}"); }
     }
 
     private static void Back()
@@ -374,18 +391,6 @@ public class TerminalArchive : ModuleBase
 
     private static Texture2D _white;
     private static GUIStyle _style;
-    private static Font _mono;
-    private static bool _monoTried;
-
-    private static Font Mono(int size)
-    {
-        if (_monoTried) return _mono;
-        _monoTried = true;
-        try { _mono = Font.CreateDynamicFontFromOSFont(new[] { "Consolas", "Lucida Console", "Courier New" }, size); } catch { }
-        ModInfo.Log.LogInfo($"[Archive] font: {(_mono != null ? _mono.name : "default")}");
-        return _mono;
-    }
-
     private static void Rect_(Rect r, Color c) { GUI.color = c; GUI.DrawTexture(r, _white); }
 
     private static void Frame(Rect r, Color c, float t = 1f)
@@ -406,8 +411,6 @@ public class TerminalArchive : ModuleBase
         if (_style == null)
         {
             _style = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, wordWrap = false, clipping = TextClipping.Clip, richText = false };
-            var f = Mono(L.Font);
-            if (f != null) _style.font = f;
         }
         _style.fontSize = L.Font;
         var old = GUI.color;

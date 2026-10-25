@@ -1,7 +1,8 @@
 # Changelog
 
 ## 0.7.4
-- New module **TerminalArchive**: an ARCHIVE button on the rundown screen (a copy of CREDITS, next to it) opens a terminal-like screen with the terminal logs of the expeditions you've completed in this rundown (secondary / overload logs once you've entered that layer). Click a line to open it, right click / Backspace — back, wheel — scroll, Esc — close. ShowUncompleted opens the rest too (spoilers).
+- New module **TerminalArchive**: an ARCHIVE button on the rundown screen (a copy of CREDITS, next to it) opens a terminal-like screen with the terminal logs of the expeditions you've completed in this rundown (the screen's own "finished" marks; secondary / overload logs too — SecondaryLayers). Click a line to open it, right click / Backspace — back, wheel — scroll, Esc — close. ShowUncompleted opens the rest too (spoilers).
+  The button appears only once the rundown screen is fully up (CREDITS shown, expeditions placed) and hides with CREDITS; while the archive is open the screen's own buttons are paused (no game method is patched for it).
 - TerminalPlus: **Tab after READ** (or cat / less) completes the log file name from the files this terminal lists.
 - AllApparel is **off by default**: with it on the APPAREL menu came out empty. The unlock itself is behind UnlockExperimental.
 - The version line under the game's watermark: added once by a hook on the watermark update instead of a scene search every few seconds (a possible source of hitches).
