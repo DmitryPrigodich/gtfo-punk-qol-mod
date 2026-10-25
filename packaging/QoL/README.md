@@ -22,6 +22,7 @@ Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rul
 | LockerItemPing | Pings the item inside an open locker/box instead of the whole container. |
 | ResourceAutoMark | Packs and consumables seen by you or teammates get a marker with name and charges (local only). |
 | ReturnToLocker | Hold E while looking into an open locker/box to put your pack or consumable back. |
+| AllApparel | All apparel available in the APPAREL menu. |
 | PackControls | E — apply to whoever you look at, otherwise yourself; LMB — yourself; RMB — teammate. |
 | PackHelper | While holding a resource pack, teammates' health/ammo is shown above them. |
 | ResourceReceivedSound | Plays a sound when a teammate gives you ammo or heals you. |

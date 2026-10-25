@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.3
+- New module **AllApparel**: every apparel item (helmets, torsos, legs, backpacks, palettes) is available in the APPAREL menu.
+- ReturnToLocker: looking at an item lying in the locker no longer shows "put back" — the item can be picked up (a syringe next to a pack couldn't be taken).
+
 ## 0.7.2
 - The version shows under the game's watermark (bottom right): "GPUNK QOL v0.7.2".
 - In-game texts: an old "ru" setting is switched back to auto once (expedition stats follow the game's language).

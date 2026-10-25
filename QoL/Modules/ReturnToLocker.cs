@@ -120,9 +120,10 @@ public class ReturnToLocker : ModuleBase
             if (h.collider == null) continue;
             var c = h.collider.GetComponentInParent<LG_WeakResourceContainer>();
             if (c != null) { container = c; hitPoint = h.point; break; }
-            // Look past triggers, players and lying items; anything else (a wall) stops us.
-            if (h.collider.isTrigger || h.collider.GetComponentInParent<LG_PickupItem_Sync>() != null
-                || h.collider.GetComponentInParent<PlayerAgent>() != null) continue;
+            // Looking at an item lying there — picking it up comes first (the game's own prompt), no "put back" here.
+            if (h.collider.GetComponentInParent<LG_PickupItem_Sync>() != null) return false;
+            // Look past triggers and players; anything else (a wall) stops us.
+            if (h.collider.isTrigger || h.collider.GetComponentInParent<PlayerAgent>() != null) continue;
             break;
         }
         if (container == null) return false;
