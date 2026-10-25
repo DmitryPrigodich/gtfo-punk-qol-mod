@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.2
+- The version shows under the game's watermark (bottom right): "GPUNK QOL v0.7.2".
+- In-game texts: an old "ru" setting is switched back to auto once (expedition stats follow the game's language).
+
 ## 0.7.1
 - In-game texts (expedition stats and the rest) follow the game's language by default: Russian when the game is in Russian ([General] TextLanguage = auto; en / ru to force one). The old Language key is moved over if it was changed.
 
