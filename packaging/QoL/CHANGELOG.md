@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.1
+- In-game texts (expedition stats and the rest) follow the game's language by default: Russian when the game is in Russian ([General] TextLanguage = auto; en / ru to force one). The old Language key is moved over if it was changed.
+
 ## 0.7.0
 - Removed **LoadoutPresets** (F5–F8 loadout presets) — little real use for the code it took. Its file `BepInEx/config/GtfoPunk.LoadoutPresets.json` can be deleted.
 - Removed the **StatusInChat** test module (it was off by default).

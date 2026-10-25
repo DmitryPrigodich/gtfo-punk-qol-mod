@@ -6,7 +6,7 @@ Client-side quality-of-life features and bug fixes for GTFO.
 - **No balance changes.** Safe to use with randoms in matchmaking.
 - **Does not require GTFO-API.**
 - **Every feature has its own toggle** in `BepInEx/config/AmDDRed.GtfoPunk.QoL.cfg`.
-- In-game text language: `[General] Language = en` (or `ru`).
+- In-game text language: `[General] TextLanguage = auto` — as the game's language (or `en` / `ru`).
 - **Plays nice with other mods:** if you already have a mod that does the same thing (QoLFix, PingEverything, PacksHelper, DropItem, ResourceHelper, DMRReloadFix…), the overlapping feature turns itself off. The startup log shows a summary of what is on, off or skipped.
 
 Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rules**.
