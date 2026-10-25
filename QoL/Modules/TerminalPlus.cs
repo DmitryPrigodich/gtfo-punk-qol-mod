@@ -17,7 +17,7 @@ namespace GtfoPunk.QoL.Modules;
 ///  - Hotkeys: Ctrl+L — clear screen, Ctrl+C / Ctrl+U — erase line, Ctrl+V — paste,
 ///    Ctrl+R — history search (press again for the next match).
 ///  - Small stuff: whoami, echo, uname, uptime.
-/// Arrows ↑/↓ (history) and Tab (completion) work as stock.
+/// Arrows ↑/↓ (history) and Tab (completion) work as stock; Tab after READ completes the log file name.
 /// </summary>
 public class TerminalPlus : ModuleBase
 {
@@ -109,6 +109,7 @@ public class TerminalPlus : ModuleBase
         {
             var t = __instance.m_terminal;
             if (t == null) return;
+            if (Input.GetKeyDown(KeyCode.Tab)) { try { CompleteFileName(t); } catch (Exception e) { ModInfo.Log.LogWarning($"[TerminalPlus] Tab: {e.Message}"); } }
             if (!(Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl))) return;
             var st = StateOf(t);
 
@@ -117,6 +118,35 @@ public class TerminalPlus : ModuleBase
             else if (Input.GetKeyDown(KeyCode.V)) Paste(t);
             else if (Input.GetKeyDown(KeyCode.R)) ReverseSearch(t, st);
         }
+    }
+
+    private static readonly Regex ReadCmd = new(@"^\s*(READ|CAT|LESS|MORE)\s+(\S*)$", RegexOptions.IgnoreCase);
+
+    /// <summary>Tab after READ (cat, less): completes the log file name from this terminal's files (common start if several).</summary>
+    private static void CompleteFileName(LG_ComputerTerminal t)
+    {
+        string line = t.m_currentLine ?? "";
+        var m = ReadCmd.Match(line);
+        if (!m.Success || t.m_localLogs == null) return;
+        string part = m.Groups[2].Value.ToUpperInvariant();
+        var names = new List<string>();
+        foreach (var kv in t.m_localLogs)
+        {
+            string n = kv.Key;
+            if (string.IsNullOrEmpty(n)) continue;
+            if (t.m_logVisibleMap != null && t.m_logVisibleMap.ContainsKey(n) && !t.m_logVisibleMap[n]) continue;
+            if (n.ToUpperInvariant().StartsWith(part)) names.Add(n.ToUpperInvariant());
+        }
+        if (names.Count == 0) return;
+        string common = names[0];
+        foreach (var n in names)
+        {
+            int i = 0;
+            while (i < common.Length && i < n.Length && common[i] == n[i]) i++;
+            common = common.Substring(0, i);
+        }
+        if (common.Length <= part.Length && names.Count > 1) return;
+        SetLine(t, m.Groups[1].Value.ToUpperInvariant() + " " + common);
     }
 
     private static void Paste(LG_ComputerTerminal t)

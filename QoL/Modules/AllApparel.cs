@@ -14,6 +14,13 @@ public class AllApparel : ModuleBase
     public override string Description => "All apparel (helmets, torsos, legs, backpacks, palettes) available in the APPAREL menu.";
     public override ModuleSide Side => ModuleSide.Client;
 
+    public override bool EnabledByDefault => false;
+
+    private static ConfigEntry<bool> _unlock;
+
+    protected override void OnBindConfig() =>
+        _unlock = Bind("UnlockExperimental", false, "EXPERIMENT: add every apparel item. Off for now — with it the APPAREL menu came out empty (0.7.3).");
+
     protected override void OnEnable() => FrameTicker.OnUpdate += Tick;
 
     private static float _nextCheck;
@@ -22,13 +29,13 @@ public class AllApparel : ModuleBase
     [HarmonyPatch(typeof(VanityItemInventory), nameof(VanityItemInventory.UpdateItems))]
     private static class Patch_Update
     {
-        private static void Postfix(VanityItemInventory __instance) { try { AddAll(__instance); } catch (Exception e) { ModInfo.Log.LogWarning($"[AllApparel] {e.Message}"); } }
+        private static void Postfix(VanityItemInventory __instance) { if (!_unlock.Value) return; try { AddAll(__instance); } catch (Exception e) { ModInfo.Log.LogWarning($"[AllApparel] {e.Message}"); } }
     }
 
     /// <summary>Also once in a while in the menus, in case the inventory was built before we were ready.</summary>
     private static void Tick()
     {
-        if (Time() < _nextCheck || GameUtil.InLevel) return;
+        if (!_unlock.Value || Time() < _nextCheck || GameUtil.InLevel) return;
         _nextCheck = Time() + 5f;
         try
         {

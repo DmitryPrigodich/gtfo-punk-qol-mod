@@ -2,7 +2,7 @@
   <PropertyGroup>
     <AssemblyName>GtfoPunk.QoL</AssemblyName>
     <RootNamespace>GtfoPunk.QoL</RootNamespace>
-    <Version>0.7.3</Version>
+    <Version>0.7.4</Version>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="**/*.cs" Exclude="bin/**;obj/**" />

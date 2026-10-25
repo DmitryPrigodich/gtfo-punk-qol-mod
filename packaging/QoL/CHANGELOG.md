@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.4
+- New module **TerminalArchive**: an ARCHIVE button on the rundown screen (a copy of CREDITS, next to it) opens a terminal-like screen with the terminal logs of the expeditions you've completed in this rundown (secondary / overload logs once you've entered that layer). Click a line to open it, right click / Backspace — back, wheel — scroll, Esc — close. ShowUncompleted opens the rest too (spoilers).
+- TerminalPlus: **Tab after READ** (or cat / less) completes the log file name from the files this terminal lists.
+- AllApparel is **off by default**: with it on the APPAREL menu came out empty. The unlock itself is behind UnlockExperimental.
+- The version line under the game's watermark: added once by a hook on the watermark update instead of a scene search every few seconds (a possible source of hitches).
+
 ## 0.7.3
 - New module **AllApparel**: every apparel item (helmets, torsos, legs, backpacks, palettes) is available in the APPAREL menu.
 - ReturnToLocker: looking at an item lying in the locker no longer shows "put back" — the item can be picked up (a syringe next to a pack couldn't be taken).

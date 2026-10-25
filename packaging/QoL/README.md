@@ -22,7 +22,7 @@ Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rul
 | LockerItemPing | Pings the item inside an open locker/box instead of the whole container. |
 | ResourceAutoMark | Packs and consumables seen by you or teammates get a marker with name and charges (local only). |
 | ReturnToLocker | Hold E while looking into an open locker/box to put your pack or consumable back. |
-| AllApparel | All apparel available in the APPAREL menu. |
+| AllApparel | All apparel available in the APPAREL menu. **Off by default** (experimental: the menu came out empty). |
 | PackControls | E — apply to whoever you look at, otherwise yourself; LMB — yourself; RMB — teammate. |
 | PackHelper | While holding a resource pack, teammates' health/ammo is shown above them. |
 | ResourceReceivedSound | Plays a sound when a teammate gives you ammo or heals you. |
@@ -38,7 +38,8 @@ Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rul
 | ScreenLiquidFilter | Hides blood/goo/etc. on screen, per category. **Off by default.** |
 | NoiseRemoval | Removes the blue-noise grain overlay. **Off by default.** |
 | WeaponStats | Weapon stats in the loadout: damage, mag, reserve, fire rate, reload, multipliers, spread, hits-to-kill. |
-| TerminalPlus | Linux-style terminal: `ls`, `cat`, `clear`, `p am 69`, `ls \| grep ammo`, `!!`, `history`, Ctrl+L/C/U/V/R. |
+| TerminalPlus | Linux-style terminal: `ls`, `cat`, `clear`, `p am 69`, `ls \| grep ammo`, `!!`, `history`, Ctrl+L/C/U/V/R; Tab after `READ` completes the log file name. |
+| TerminalArchive | ARCHIVE button on the rundown screen (next to CREDITS): read the terminal logs of the expeditions you've completed. |
 | PreciseHud | Health with decimals and HP, tool charges, teammates' health/infection on the map. |
 | HudToggle | F9 hides the whole HUD (screenshots). |
 | ExpeditionStats | Results screen: time, downs, kills/damage per player (when hosting), team kills, your packs. |
