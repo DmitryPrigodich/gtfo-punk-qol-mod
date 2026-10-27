@@ -4,7 +4,8 @@
 - Archive terminal:
   - covers **every rundown** you've opened on the rundown screen — the game shows "finished" only for the rundown on screen, so the finished expeditions are remembered in `BepInEx/config/GtfoPunk.Archive.txt`;
   - LIST is a table of the completed expeditions' logs: CODE, NAME, LOG ID, AUDIO; LIST R4 — one rundown, LIST R4A1 — one expedition (LOGS is the same);
-  - READ / PLAY take the start of the log ID (READ VN8); Tab prints the choices once instead of on every press.
+  - READ / PLAY take the start of the log ID (READ VN8); Tab prints the choices once instead of on every press;
+  - opens with HELP and the LIST of logs; a console font (Consolas / Lucida Console / Courier New) if the system has one.
 
 ## 0.7.10
 - **AllApparel is back, on by default**: every apparel item in the APPAREL menu (local only, nothing sent to the server). Done without hooking the game's apparel methods this time (that hook emptied the menu): the list is topped up in the menus every 2 s. Log: `[AllApparel] apparel: N owned + M added`.

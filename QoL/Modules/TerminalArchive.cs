@@ -323,7 +323,8 @@ public class TerminalArchive : ModuleBase
         _openedFrame = Time.frameCount;
         _out.Clear(); _input = ""; _scroll = 0; _lastTab = null;
         Print(Lang.T("WARDEN ARCHIVE TERMINAL — logs of the expeditions you've completed", "АРХИВНЫЙ ТЕРМИНАЛ СМОТРИТЕЛЯ — логи пройденных экспедиций"), Amber);
-        Print(Lang.T("LIST [R4 | R4A1], READ id, PLAY id, STOP, CLS, HELP, EXIT", "LIST [R4 | R4A1], READ id, PLAY id, STOP, CLS, HELP, EXIT"), Dim);
+        Print("", Ink);
+        Run("HELP", false);
         Print("", Ink);
         Run("LIST", false);
         Overlay.Ensure();
@@ -543,6 +544,16 @@ public class TerminalArchive : ModuleBase
     private static Texture2D _white;
     private static GUIStyle _style;
 
+    /// <summary>A console font from the system (Consolas, Lucida Console, Courier New); the default one if none.</summary>
+    private static Font ConsoleFont(int size)
+    {
+        Font f = null;
+        try { f = Font.CreateDynamicFontFromOSFont(new[] { "Consolas", "Lucida Console", "Courier New" }, size); }
+        catch (Exception e) { ModInfo.Log.LogWarning($"[Archive] console font: {e.Message}"); }
+        ModInfo.Log.LogInfo($"[Archive] font: {(f != null ? f.name : "default")}");
+        return f;
+    }
+
     private static void Rect_(Rect r, Color c) { GUI.color = c; GUI.DrawTexture(r, _white); }
 
     private static void Frame(Rect r, Color c, float t = 1f)
@@ -564,7 +575,12 @@ public class TerminalArchive : ModuleBase
         if (!_open) return;
         if (_white == null) { _white = new Texture2D(1, 1); _white.SetPixel(0, 0, Color.white); _white.Apply(); }
         var L = GetLayout();
-        _style ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, wordWrap = false, clipping = TextClipping.Clip, richText = false };
+        if (_style == null)
+        {
+            _style = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, wordWrap = false, clipping = TextClipping.Clip, richText = false };
+            var f = ConsoleFont(L.Font);
+            if (f != null) _style.font = f;
+        }
         _style.fontSize = L.Font;
         var old = GUI.color;
 
