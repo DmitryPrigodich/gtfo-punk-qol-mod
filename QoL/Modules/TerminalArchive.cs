@@ -54,20 +54,33 @@ public class TerminalArchive : ModuleBase
     private static readonly Regex Tags = new("<[^>]*>");
 
     /// <summary>The expeditions as the rundown screen shows them (its icons know the tier, the index and whether it's finished).</summary>
+    private static readonly Regex FullCode = new(@"^R\d+[A-E]\d", RegexOptions.IgnoreCase);
+
     private static void Build(CM_PageRundown_New page)
     {
         _exps.Clear();
-        var icons = page?.m_expIconsAll;
-        if (icons == null || icons.Count == 0) { ModInfo.Log.LogWarning("[Archive] no expeditions on the rundown screen"); return; }
-        var seen = new HashSet<string>();
-        for (int i = 0; i < icons.Count; i++)
+        if (page == null) return;
+        // All icon lists of the screen (some rundowns fill only the per-tier lists), each expedition once.
+        var icons = new List<CM_ExpeditionIcon_New>();
+        var seen = new HashSet<IntPtr>();
+        foreach (var list in new[] { page.m_expIconsAll, page.m_expIconsTier1, page.m_expIconsTier2, page.m_expIconsTier3, page.m_expIconsTier4, page.m_expIconsTier5, page.m_expIconsTierExt })
         {
-            var icon = icons[i];
-            var d = icon?.DataBlock;
-            if (d == null) continue;
-            string code = Tags.Replace(icon.ShortName ?? "", "").Trim();
-            if (code.Length == 0) code = (d.Descriptive?.Prefix ?? "") + icon.Tier.ToString().Replace("Tier", "") + (icon.ExpIndex + 1);
-            if (!seen.Add(code)) continue;
+            if (list == null) continue;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var icon = list[i];
+                var d = icon?.DataBlock;
+                if (d != null && seen.Add(d.Pointer)) icons.Add(icon);
+            }
+        }
+        if (icons.Count == 0) { ModInfo.Log.LogWarning("[Archive] no expeditions on the rundown screen"); return; }
+        icons.Sort((x, y) => x.Tier != y.Tier ? x.Tier.CompareTo(y.Tier) : x.ExpIndex.CompareTo(y.ExpIndex));
+        foreach (var icon in icons)
+        {
+            var d = icon.DataBlock;
+            string shortName = Tags.Replace(icon.ShortName ?? "", "").Trim();
+            string letter = icon.Tier.ToString().Replace("Tier", "");
+            string code = FullCode.IsMatch(shortName) ? shortName : (d.Descriptive?.Prefix ?? "") + letter + (icon.ExpIndex + 1);
             var status = icon.Status;
             var exp = new Exp
             {
@@ -83,7 +96,8 @@ public class TerminalArchive : ModuleBase
             }
             _exps.Add(exp);
         }
-        ModInfo.Log.LogInfo($"[Archive] rundown screen: {_exps.Count} expeditions, {_exps.Count(e => e.Done)} completed, {_exps.Where(e => e.Open).Sum(e => e.Logs.Count)} logs open");
+        ModInfo.Log.LogInfo($"[Archive] rundown screen: {_exps.Count} expeditions, {_exps.Count(e => e.Done)} completed, {_exps.Where(e => e.Open).Sum(e => e.Logs.Count)} logs open; "
+            + string.Join(", ", _exps.Select(e => $"{e.Code}{(e.Done ? "✓" : "")}:{e.Logs.Count}")));
     }
 
     private static void AddLayout(Exp exp, uint layoutId, string layer)

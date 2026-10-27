@@ -1,8 +1,9 @@
 # Changelog
 
 ## 0.7.5
-- New fix **ApparelFix**: the APPAREL menu came out empty when the drop server lists an item the game data doesn't know ("Got vanity item with id … that does not exist"). Such items are left out; the log shows how many the menu got.
+- New module **ApparelFix** (diagnostics): logs how many apparel items the APPAREL menu got. (The first build also filtered the server's apparel list — that crashed the game at start and was taken out.)
 - Archive: audio logs play — P (or a click on the header line) plays / stops.
+- Archive: expeditions come from all of the screen's icon lists and are told apart by their data, not by the short name (on R8 the list had one line).
 
 ## 0.7.4
 - New module **TerminalArchive**: an ARCHIVE button on the rundown screen (a copy of CREDITS, next to it) opens a terminal-like screen with the terminal logs of the expeditions you've completed in this rundown (the screen's own "finished" marks; secondary / overload logs too — SecondaryLayers). Click a line to open it, right click / Backspace — back, wheel — scroll, Esc — close. ShowUncompleted opens the rest too (spoilers).

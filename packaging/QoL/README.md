@@ -53,7 +53,7 @@ Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rul
 | BioTrackerFixes | Bio tracker doesn't eat tool refills; old scan tags don't linger on screen. |
 | ScoutScreamMuffleFix | Sound no longer stays muffled after a scout scream. |
 | DoorFoamFix | C-foam no longer passes through door cracks. |
-| ApparelFix | APPAREL menu isn't empty when the server lists an item unknown to the game. |
+| ApparelFix | Logs how many items the APPAREL menu got (diagnostics). |
 
 ## Credits
 Several features re-implement ideas from community mods (rewritten from scratch for the current game version): QoLFix (notpeelz), PingEverything / ResourceHelper / PacksHelper (Localia), DropItem (Extra), DMRReloadFix (randomuserhi), AutoReloadPlus (Dinorush), WeaponStatShower (DacreDOLOLO), BashTerm (food), TerminalCompletion (OneOfTheLiving), PreciseUI (Andocas), HUDToggler (ValenTeam). Thanks to their authors.
