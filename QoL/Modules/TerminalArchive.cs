@@ -10,10 +10,11 @@ using UnityEngine;
 namespace GtfoPunk.QoL.Modules;
 
 /// <summary>
-/// ARCHIVE button on the rundown screen (a copy of the CREDITS button): opens a terminal-like screen with the
-/// terminal logs of the expeditions you've completed in the current rundown — read them again without replaying.
-/// Mouse (the game cursor): click a line to open it, right click / Backspace — back, wheel — scroll, Esc — close.
-/// Keyboard: ↑/↓, Enter. Client-side, reads only the game data and what the rundown screen shows.
+/// ARCHIVE button on the rundown screen (a copy of the CREDITS button): opens a terminal with the terminal logs of the
+/// expeditions you've completed in the current rundown — read (and listen to) them again without replaying.
+/// Typed like the game's terminal: LIST (expeditions), LOGS [R4A1] (log files), READ name (Tab completes),
+/// PLAY / STOP (audio logs), CLS, HELP, EXIT. ↑/↓ — history, PgUp/PgDn / wheel — scroll, Esc — close.
+/// Client-side, reads only the game data and what the rundown screen shows.
 /// </summary>
 public class TerminalArchive : ModuleBase
 {
@@ -248,25 +249,147 @@ public class TerminalArchive : ModuleBase
         return b;
     }
 
-    // ---------- the screen: 0 — expeditions, 1 — logs of one, 2 — a log ----------
-
-    private static int _level, _exp, _log, _sel, _scroll, _hover = -1;
-    private static List<string> _lines = new();
-    private static float _wrapWidth;
-    private static int _wrapFont;
+    // ---------- the terminal ----------
 
     private static void Toggle() { if (_open) Close(); else OpenArchive(); }
+
+    private static readonly List<(string Text, Color Color)> _out = new();
+    private static readonly List<string> _history = new();
+    private static string _input = "";
+    private static int _histPos, _scroll; // _scroll: lines up from the bottom
+    private static string _scope;          // expedition code LOGS / READ look in first (null — all)
 
     private static void OpenArchive()
     {
         Build(_btnPage ?? Page());
         _open = true;
         _openedFrame = Time.frameCount;
-        _level = 0; _sel = 0; _scroll = 0;
+        _out.Clear(); _input = ""; _scroll = 0; _scope = null;
+        Print(Lang.T("WARDEN ARCHIVE TERMINAL — logs of the expeditions you've completed", "АРХИВНЫЙ ТЕРМИНАЛ СМОТРИТЕЛЯ — логи пройденных экспедиций"), Amber);
+        Print(Lang.T("Commands: LIST, LOGS [code], READ name, PLAY name, STOP, CLS, HELP, EXIT", "Команды: LIST, LOGS [код], READ имя, PLAY имя, STOP, CLS, HELP, EXIT"), Dim);
+        Print("", Ink);
+        Run("LIST", false);
         Overlay.Ensure();
         Overlay.OnDraw -= Draw;
         Overlay.OnDraw += Draw;
         BlockPage(true);
+    }
+
+    private static void Print(string text, Color c)
+    {
+        foreach (var line in (text ?? "").Split('\n')) _out.Add((line, c));
+        while (_out.Count > 3000) _out.RemoveAt(0);
+        _scroll = 0;
+        _wrapped = null;
+    }
+
+    private static IEnumerable<Exp> OpenExps() => _exps.Where(e => e.Open);
+
+    private static IEnumerable<(Exp Exp, LogFile Log)> Files(string scope)
+    {
+        foreach (var e in OpenExps())
+            if (scope == null || e.Code.Equals(scope, StringComparison.OrdinalIgnoreCase))
+                foreach (var l in e.Logs) yield return (e, l);
+    }
+
+    private static (Exp, LogFile) FindFile(string name)
+    {
+        name = name.Trim();
+        foreach (var scope in new[] { _scope, null })
+        {
+            var all = Files(scope).ToList();
+            var hit = all.FirstOrDefault(f => f.Log.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (hit.Log != null) return hit;
+            var pre = all.Where(f => f.Log.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (pre.Count == 1) return pre[0];
+        }
+        return (null, null);
+    }
+
+    private static void Run(string line, bool echo = true)
+    {
+        line = (line ?? "").Trim();
+        if (echo) Print("> " + line, Amber);
+        if (line.Length == 0) return;
+        if (echo && (_history.Count == 0 || _history[^1] != line)) _history.Add(line);
+        _histPos = _history.Count;
+        var parts = line.Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+        string cmd = parts[0].ToUpperInvariant(), arg = parts.Length > 1 ? parts[1].Trim() : "";
+        switch (cmd)
+        {
+            case "HELP": case "MAN":
+                Print(Lang.T(
+                    "LIST — expeditions of this rundown (✓ — completed)\nLOGS — log files of the completed ones; LOGS R4A1 — of one\nREAD name — show a log (Tab completes the name)\nPLAY name — play an audio log; STOP — stop it\nCLS — clear the screen; EXIT or Esc — close\n↑/↓ — command history, PgUp/PgDn or the wheel — scroll",
+                    "LIST — экспедиции рандауна (✓ — пройдена)\nLOGS — файлы логов пройденных; LOGS R4A1 — одной\nREAD имя — показать лог (Tab дописывает имя)\nPLAY имя — включить аудиолог; STOP — выключить\nCLS — очистить экран; EXIT или Esc — закрыть\n↑/↓ — история команд, PgUp/PgDn или колесо — прокрутка"), Ink);
+                break;
+            case "LIST": case "LS": case "DIR":
+                if (_exps.Count == 0) { Print(Lang.T("NO DATA", "НЕТ ДАННЫХ"), Dim); break; }
+                foreach (var e in _exps)
+                {
+                    string state = e.Done ? "✓" : " ";
+                    string logs = e.Open ? Lang.T($"{e.Logs.Count} logs", $"логов: {e.Logs.Count}") : Lang.T("— not completed —", "— не пройдена —");
+                    Print($" {state} {e.Code,-7} {(e.Open ? e.Name.ToUpperInvariant() : "████████"),-28} {logs}", e.Open ? Ink : Dim);
+                }
+                break;
+            case "LOGS": case "LOG":
+            {
+                string scope = arg.Length > 0 ? arg.ToUpperInvariant() : null;
+                if (scope != null && !_exps.Any(e => e.Code.Equals(scope, StringComparison.OrdinalIgnoreCase))) { Print(Lang.T($"No expedition {scope}. LIST shows them.", $"Нет экспедиции {scope}. Список — LIST."), Dim); break; }
+                if (scope != null && !OpenExps().Any(e => e.Code.Equals(scope, StringComparison.OrdinalIgnoreCase))) { Print(Lang.T($"{scope}: not completed — its logs are locked.", $"{scope}: не пройдена — логи закрыты."), Dim); break; }
+                _scope = scope;
+                var files = Files(scope).ToList();
+                if (files.Count == 0) { Print(Lang.T("No logs.", "Логов нет."), Dim); break; }
+                string last = null;
+                foreach (var (e, l) in files)
+                {
+                    if (e.Code != last) { Print($"{e.Code}  {e.Name.ToUpperInvariant()}", Amber); last = e.Code; }
+                    Print($"   {l.Name,-36} {l.Layer,-10}{(l.Audio ? Lang.T(" [AUDIO]", " [АУДИО]") : "")}", Ink);
+                }
+                break;
+            }
+            case "READ": case "CAT": case "LESS": case "OPEN":
+            {
+                if (arg.Length == 0) { Print(Lang.T("READ which file? LOGS lists them.", "READ какой файл? Список — LOGS."), Dim); break; }
+                var (e, l) = FindFile(arg);
+                if (l == null) { Print(Lang.T($"No such log: {arg}", $"Нет такого лога: {arg}"), Dim); break; }
+                Print($"——— {e.Code} / {l.Name} ———", Amber);
+                Print(l.Text, Ink);
+                if (l.Audio) Print(Lang.T($"[audio log — PLAY {l.Name}]", $"[аудиолог — PLAY {l.Name}]"), Dim);
+                Print("", Ink);
+                break;
+            }
+            case "PLAY":
+            {
+                var (e, l) = FindFile(arg);
+                if (l == null || !l.Audio) { Print(Lang.T("No such audio log.", "Нет такого аудиолога."), Dim); break; }
+                PlayAudio(l.AudioId, l.Name);
+                break;
+            }
+            case "STOP": StopAudio(); Print(Lang.T("Stopped.", "Остановлено."), Dim); break;
+            case "CLS": case "CLEAR": _out.Clear(); _wrapped = null; break;
+            case "EXIT": case "QUIT": case "LOGOFF": Close(); break;
+            default: Print(Lang.T($"Unknown command: {cmd}. HELP — the list.", $"Неизвестная команда: {cmd}. HELP — список."), Dim); break;
+        }
+    }
+
+    /// <summary>Tab after READ / PLAY: completes the file name (the common part if there are several).</summary>
+    private static void Complete()
+    {
+        var m = Regex.Match(_input, @"^\s*(READ|CAT|LESS|OPEN|PLAY)\s+(\S*)$", RegexOptions.IgnoreCase);
+        if (!m.Success) return;
+        string pre = m.Groups[2].Value;
+        var names = (Files(_scope).Any() ? Files(_scope) : Files(null)).Select(f => f.Log.Name)
+            .Where(n => n.StartsWith(pre, StringComparison.OrdinalIgnoreCase)).Distinct().ToList();
+        if (names.Count == 0) return;
+        string common = names[0];
+        foreach (var n in names.Skip(1))
+        {
+            int k = 0;
+            while (k < common.Length && k < n.Length && char.ToUpperInvariant(common[k]) == char.ToUpperInvariant(n[k])) k++;
+            common = common.Substring(0, k);
+        }
+        if (names.Count > 1 && common.Length <= pre.Length) { Print(string.Join("   ", names), Dim); return; }
+        _input = _input.Substring(0, m.Groups[2].Index) + common;
     }
 
     // ---------- audio logs ----------
@@ -274,25 +397,18 @@ public class TerminalArchive : ModuleBase
     private static CellSoundPlayer _audio;
     private static bool _playing;
 
-    private static uint CurrentAudio()
+    private static void PlayAudio(uint id, string name)
     {
-        if (_level != 2 || _exp >= _exps.Count || _log >= _exps[_exp].Logs.Count) return 0;
-        return _exps[_exp].Logs[_log].AudioId;
-    }
-
-    private static void ToggleAudio()
-    {
-        uint id = CurrentAudio();
-        if (id == 0) return;
-        if (_playing) { StopAudio(); return; }
+        StopAudio();
         try
         {
             _audio ??= new CellSoundPlayer();
             _audio.Post(id, true);
             _playing = true;
-            ModInfo.Log.LogInfo($"[Archive] playing the audio log (event {id})");
+            Print(Lang.T($"Playing {name}… (STOP — stop)", $"Играет {name}… (STOP — стоп)"), Dim);
+            ModInfo.Log.LogInfo($"[Archive] playing the audio log {name} (event {id})");
         }
-        catch (Exception e) { ModInfo.Log.LogWarning($"[Archive] audio log {id}: {e.Message}"); }
+        catch (Exception e) { Print(Lang.T("Can't play it here.", "Здесь не воспроизводится."), Dim); ModInfo.Log.LogWarning($"[Archive] audio log {id}: {e.Message}"); }
     }
 
     private static void StopAudio()
@@ -313,7 +429,7 @@ public class TerminalArchive : ModuleBase
     private static readonly List<Collider> _off3d = new();
     private static readonly List<Collider2D> _off2d = new();
 
-    /// <summary>While the archive is open the rundown screen's buttons under it can't be hit (their colliders are off), except ARCHIVE.</summary>
+    /// <summary>While the archive is open the rundown screen's buttons can't be hit (their colliders are off), except ARCHIVE.</summary>
     private static void BlockPage(bool block)
     {
         try
@@ -336,113 +452,48 @@ public class TerminalArchive : ModuleBase
         catch (Exception e) { ModInfo.Log.LogWarning($"[Archive] pause buttons: {e.Message}"); }
     }
 
-    private static void Back()
-    {
-        StopAudio();
-        if (_level == 0) { Close(); return; }
-        _level--;
-        _sel = _level == 0 ? _exp : _log;
-        _scroll = Math.Max(0, _sel - 3);
-    }
+    // ---------- keyboard ----------
 
-    private static int RowCount() => _level switch
+    private static void Input_(CM_PageRundown_New page)
     {
-        0 => _exps.Count,
-        1 => _exp < _exps.Count ? _exps[_exp].Logs.Count : 0,
-        _ => _lines.Count,
-    };
-
-    private static void Enter(int row)
-    {
-        if (_level == 0)
+        if (Time.frameCount == _openedFrame) return;
+        if (Input.GetKeyDown(KeyCode.Escape)) { Close(); return; }
+        var L = GetLayout();
+        int pageLines = Math.Max(1, L.Rows - 2);
+        if (Input.GetKeyDown(KeyCode.PageUp)) _scroll += pageLines;
+        if (Input.GetKeyDown(KeyCode.PageDown)) _scroll -= pageLines;
+        float wheel = Input.mouseScrollDelta.y;
+        if (Math.Abs(wheel) > 0.01f) _scroll += (int)Math.Round(wheel * 3f);
+        if (Input.GetKeyDown(KeyCode.UpArrow) && _history.Count > 0) { _histPos = Math.Max(0, _histPos - 1); _input = _history[_histPos]; }
+        if (Input.GetKeyDown(KeyCode.DownArrow) && _history.Count > 0) { _histPos = Math.Min(_history.Count, _histPos + 1); _input = _histPos < _history.Count ? _history[_histPos] : ""; }
+        if (Input.GetKeyDown(KeyCode.Tab)) Complete();
+        foreach (char ch in Input.inputString)
         {
-            if (row < 0 || row >= _exps.Count || !_exps[row].Open || _exps[row].Logs.Count == 0) return;
-            _exp = row; _level = 1; _sel = 0; _scroll = 0;
-        }
-        else if (_level == 1)
-        {
-            if (row < 0 || row >= _exps[_exp].Logs.Count) return;
-            StopAudio();
-            _log = row; _level = 2; _sel = 0; _scroll = 0; _wrapWidth = -1f;
+            if (ch == '\b') { if (_input.Length > 0) _input = _input.Substring(0, _input.Length - 1); }
+            else if (ch == '\n' || ch == '\r') { string line = _input; _input = ""; Run(line); if (!_open) return; }
+            else if (ch == '\t') { }
+            else if (!char.IsControl(ch) && _input.Length < 120) _input += ch;
         }
     }
+
+    // ---------- drawing ----------
 
     private struct Layout { public Rect Panel, Body; public float Line; public int Rows, Font; }
 
     private static Layout GetLayout()
     {
         float W = Screen.width, H = Screen.height;
-        float h = H * 0.78f, w = Math.Min(W * 0.92f, h * 1.35f);
+        float h = H * 0.8f, w = Math.Min(W * 0.92f, h * 1.4f);
         var panel = new Rect((W - w) * 0.5f, (H - h) * 0.5f, w, h);
         int font = Math.Max(10, (int)(H * 0.019f * Mathf.Clamp(_fontScale.Value, 0.5f, 2.5f)));
-        float line = font * 1.45f;
-        var body = new Rect(panel.x + font * 1.5f, panel.y + line * 2.6f, panel.width - font * 3f, panel.height - line * 4.6f);
+        float line = font * 1.4f;
+        var body = new Rect(panel.x + font * 1.5f, panel.y + line, panel.width - font * 3f, panel.height - line * 3.2f);
         return new Layout { Panel = panel, Body = body, Line = line, Rows = Math.Max(1, (int)(body.height / line)), Font = font };
     }
 
-    private static Vector2 Cursor(CM_PageRundown_New page)
-    {
-        try
-        {
-            var cam = CM_PageBase.Camera;
-            if (cam != null)
-            {
-                var sp = cam.WorldToScreenPoint(page.CursorWorldPosition);
-                return new Vector2(sp.x, Screen.height - sp.y);
-            }
-        }
-        catch { }
-        var m = Input.mousePosition;
-        return new Vector2(m.x, Screen.height - m.y);
-    }
-
-    private static Vector2 _cursor;
-
-    private static void Input_(CM_PageRundown_New page)
-    {
-        var L = GetLayout();
-        _cursor = Cursor(page);
-        int count = RowCount();
-        _hover = -1;
-        if (_level < 2 && L.Body.Contains(_cursor))
-        {
-            int r = _scroll + (int)((_cursor.y - L.Body.y) / L.Line);
-            if (r < count && r - _scroll < L.Rows) _hover = r;
-        }
-        if (Time.frameCount == _openedFrame) return;
-
-        if (Input.GetKeyDown(KeyCode.Escape)) { Close(); return; }
-        if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetMouseButtonDown(1)) { Back(); return; }
-        if (_level == 2 && Input.GetKeyDown(KeyCode.P)) { ToggleAudio(); return; }
-        if (Input.GetMouseButtonDown(0))
-        {
-            if (!L.Panel.Contains(_cursor)) return; // the ARCHIVE button itself toggles; elsewhere — ignore
-            if (_level == 2 && CurrentAudio() != 0 && _cursor.y < L.Body.y && _cursor.y > L.Panel.y) { ToggleAudio(); return; } // the header line
-            if (_hover >= 0) { _sel = _hover; Enter(_hover); }
-            return;
-        }
-        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) { Enter(_sel); return; }
-
-        int step = 0;
-        if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) step = 1;
-        if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) step = -1;
-        if (Input.GetKeyDown(KeyCode.PageDown)) step = L.Rows - 1;
-        if (Input.GetKeyDown(KeyCode.PageUp)) step = -(L.Rows - 1);
-        float wheel = Input.mouseScrollDelta.y;
-        int maxScroll = Math.Max(0, count - L.Rows);
-        if (_level == 2)
-        {
-            _scroll = Mathf.Clamp(_scroll + step - (int)Math.Round(wheel * 3f), 0, maxScroll);
-            return;
-        }
-        if (step != 0) { _sel = Mathf.Clamp(_sel + step, 0, Math.Max(0, count - 1)); if (_sel < _scroll) _scroll = _sel; if (_sel >= _scroll + L.Rows) _scroll = _sel - L.Rows + 1; }
-        if (Math.Abs(wheel) > 0.01f) _scroll = Mathf.Clamp(_scroll - (int)Math.Round(wheel * 2f), 0, maxScroll);
-    }
-
-    // ---------- drawing ----------
-
     private static Texture2D _white;
     private static GUIStyle _style;
+
     private static void Rect_(Rect r, Color c) { GUI.color = c; GUI.DrawTexture(r, _white); }
 
     private static void Frame(Rect r, Color c, float t = 1f)
@@ -455,15 +506,16 @@ public class TerminalArchive : ModuleBase
 
     private static void Text(float x, float y, float w, float h, string s, Color c) { GUI.color = c; GUI.Label(new Rect(x, y, w, h), s, _style); }
 
+    private static List<(string, Color)> _wrapped;
+    private static float _wrapWidth;
+    private static int _wrapFont;
+
     private static void Draw()
     {
         if (!_open) return;
         if (_white == null) { _white = new Texture2D(1, 1); _white.SetPixel(0, 0, Color.white); _white.Apply(); }
         var L = GetLayout();
-        if (_style == null)
-        {
-            _style = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, wordWrap = false, clipping = TextClipping.Clip, richText = false };
-        }
+        _style ??= new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleLeft, wordWrap = false, clipping = TextClipping.Clip, richText = false };
         _style.fontSize = L.Font;
         var old = GUI.color;
 
@@ -471,109 +523,51 @@ public class TerminalArchive : ModuleBase
         Rect_(L.Panel, new Color(0.02f, 0.04f, 0.05f, 0.97f));
         Frame(L.Panel, new Color(Ink.r, Ink.g, Ink.b, 0.5f), 2f);
 
-        float x = L.Body.x, w = L.Body.width;
-        float top = L.Panel.y + L.Line * 0.6f;
-        string path = "ARCHIVE://" + (_level >= 1 && _exp < _exps.Count ? _exps[_exp].Code : "")
-            + (_level == 2 && _exp < _exps.Count && _log < _exps[_exp].Logs.Count ? "/" + _exps[_exp].Logs[_log].Name : "");
-        Text(x, top, CurrentAudio() != 0 ? w * 0.6f : w, L.Line, "> " + path, Amber);
-        if (CurrentAudio() != 0)
-            Text(x + w * 0.62f, top, w * 0.38f, L.Line, _playing ? Lang.T("■ AUDIO PLAYING (P — stop)", "■ ИДЁТ АУДИО (P — стоп)") : Lang.T("▶ AUDIO LOG (P — play)", "▶ АУДИОЛОГ (P — играть)"), _playing ? Amber : Ink);
-        Rect_(new Rect(x, top + L.Line * 1.25f, w, 1f), new Color(Ink.r, Ink.g, Ink.b, 0.3f));
-
-        int count = RowCount();
-        if (_level == 0) DrawExpeditions(L);
-        else if (_level == 1) DrawLogs(L);
-        else DrawLog(L);
-
-        // Scroll position.
-        if (count > L.Rows)
+        if (_wrapped == null || _wrapWidth != L.Body.width || _wrapFont != L.Font)
         {
-            var track = new Rect(L.Panel.xMax - L.Font * 0.8f, L.Body.y, 3f, L.Rows * L.Line);
+            _wrapped = new List<(string, Color)>();
+            foreach (var (t, c) in _out) foreach (var w in Wrap(t, L.Body.width)) _wrapped.Add((w, c));
+            _wrapWidth = L.Body.width; _wrapFont = L.Font;
+        }
+        int rows = L.Rows;
+        int maxScroll = Math.Max(0, _wrapped.Count - rows);
+        _scroll = Mathf.Clamp(_scroll, 0, maxScroll);
+        int first = Math.Max(0, _wrapped.Count - rows - _scroll);
+        for (int i = 0; i < rows && first + i < _wrapped.Count; i++)
+        {
+            var (t, c) = _wrapped[first + i];
+            Text(L.Body.x, L.Body.y + i * L.Line, L.Body.width, L.Line, t, c);
+        }
+        if (_wrapped.Count > rows)
+        {
+            var track = new Rect(L.Panel.xMax - L.Font * 0.8f, L.Body.y, 3f, rows * L.Line);
             Rect_(track, new Color(Ink.r, Ink.g, Ink.b, 0.15f));
-            float k = (float)L.Rows / count, pos = (float)_scroll / Math.Max(1, count - L.Rows);
+            float k = (float)rows / _wrapped.Count, pos = 1f - (float)_scroll / Math.Max(1, maxScroll);
             Rect_(new Rect(track.x - 1f, track.y + (track.height - track.height * k) * pos, 5f, track.height * k), new Color(Ink.r, Ink.g, Ink.b, 0.6f));
         }
 
-        string hint = _level == 2
-            ? (CurrentAudio() != 0 ? Lang.T("P / CLICK HEADER audio    ", "P / КЛИК ПО ЗАГОЛОВКУ аудио    ") : "")
-              + Lang.T("WHEEL / ↑↓ scroll    RMB / BACKSPACE back    ESC close", "КОЛЕСО / ↑↓ прокрутка    ПКМ / BACKSPACE назад    ESC закрыть")
-            : Lang.T("CLICK / ENTER open    RMB / BACKSPACE back    ESC close", "КЛИК / ENTER открыть    ПКМ / BACKSPACE назад    ESC закрыть");
-        Text(x, L.Panel.yMax - L.Line * 1.5f, w, L.Line, hint, Dim);
-
-        // The game's cursor is under the panel — a small marker where it is.
-        Rect_(new Rect(_cursor.x - 6f, _cursor.y - 1f, 13f, 2f), Amber);
-        Rect_(new Rect(_cursor.x - 1f, _cursor.y - 6f, 2f, 13f), Amber);
+        // The prompt.
+        float py = L.Panel.yMax - L.Line * 1.8f;
+        Rect_(new Rect(L.Body.x - 4f, py - 3f, L.Body.width + 8f, 1f), new Color(Ink.r, Ink.g, Ink.b, 0.3f));
+        bool blink = ((int)(Time.unscaledTime * 2f) & 1) == 0;
+        Text(L.Body.x, py, L.Body.width, L.Line, "\\\\ROOT\\ARCHIVE" + (_scope != null ? "\\" + _scope : "") + "> " + _input + (blink ? "_" : ""), Amber);
+        if (_scroll > 0) Text(L.Body.x + L.Body.width * 0.7f, py, L.Body.width * 0.3f, L.Line, Lang.T("↓ PgDn — back to the end", "↓ PgDn — к концу"), Dim);
         GUI.color = old;
     }
 
-    private static void Row(Layout L, int i, out float y, out bool visible)
-    {
-        int r = i - _scroll;
-        visible = r >= 0 && r < L.Rows;
-        y = L.Body.y + r * L.Line;
-        if (!visible) return;
-        if (i == _hover || (i == _sel && _hover < 0)) Rect_(new Rect(L.Body.x - 4f, y, L.Body.width + 8f, L.Line), new Color(Ink.r, Ink.g, Ink.b, 0.12f));
-    }
-
-    private static void DrawExpeditions(Layout L)
-    {
-        if (_exps.Count == 0) { Text(L.Body.x, L.Body.y, L.Body.width, L.Line, Lang.T("NO DATA", "НЕТ ДАННЫХ"), Dim); return; }
-        float codeW = L.Font * 5f;
-        for (int i = 0; i < _exps.Count; i++)
-        {
-            Row(L, i, out float y, out bool vis);
-            if (!vis) continue;
-            var e = _exps[i];
-            Text(L.Body.x, y, codeW, L.Line, e.Code, e.Open ? Amber : Dim);
-            if (!e.Open)
-            {
-                Text(L.Body.x + codeW, y, L.Body.width - codeW, L.Line, Lang.T("—— NOT COMPLETED ——", "—— НЕ ПРОЙДЕНА ——"), Dim);
-                continue;
-            }
-            Text(L.Body.x + codeW, y, L.Body.width * 0.6f, L.Line, e.Name.ToUpperInvariant() + (e.Done ? "" : Lang.T("  (not completed)", "  (не пройдена)")), Ink);
-            string n = e.Logs.Count == 0 ? Lang.T("no logs", "нет логов") : Lang.T($"{e.Logs.Count} logs", $"логов: {e.Logs.Count}");
-            Text(L.Body.x + L.Body.width * 0.75f, y, L.Body.width * 0.25f, L.Line, n, e.Logs.Count == 0 ? Dim : Ink);
-        }
-    }
-
-    private static void DrawLogs(Layout L)
-    {
-        var e = _exps[_exp];
-        for (int i = 0; i < e.Logs.Count; i++)
-        {
-            Row(L, i, out float y, out bool vis);
-            if (!vis) continue;
-            var g = e.Logs[i];
-            Text(L.Body.x, y, L.Font * 8f, L.Line, g.Layer, Dim);
-            Text(L.Body.x + L.Font * 8f, y, L.Body.width - L.Font * 8f, L.Line, g.Name + (g.Audio ? Lang.T("   [AUDIO]", "   [АУДИО]") : ""), Ink);
-        }
-    }
-
-    private static void DrawLog(Layout L)
-    {
-        var g = _exps[_exp].Logs[_log];
-        if (_wrapWidth != L.Body.width || _wrapFont != L.Font) { _lines = Wrap(g.Text, L.Body.width); _wrapWidth = L.Body.width; _wrapFont = L.Font; }
-        for (int i = _scroll; i < _lines.Count && i - _scroll < L.Rows; i++)
-            Text(L.Body.x, L.Body.y + (i - _scroll) * L.Line, L.Body.width, L.Line, _lines[i], Ink);
-    }
-
-    /// <summary>Word wrap by the measured width (done once per log and screen size).</summary>
+    /// <summary>Word wrap by the measured width.</summary>
     private static List<string> Wrap(string text, float width)
     {
         var res = new List<string>();
-        foreach (var para in text.Split('\n'))
+        if (string.IsNullOrEmpty(text)) { res.Add(""); return res; }
+        var line = "";
+        foreach (var word in text.Split(' '))
         {
-            if (para.Trim().Length == 0) { res.Add(""); continue; }
-            var line = "";
-            foreach (var word in para.Split(' '))
-            {
-                string next = line.Length == 0 ? word : line + " " + word;
-                if (line.Length > 0 && _style.CalcSize(new GUIContent(next)).x > width) { res.Add(line); line = word; }
-                else line = next;
-            }
-            res.Add(line);
+            string next = line.Length == 0 ? word : line + " " + word;
+            if (line.Length > 0 && _style.CalcSize(new GUIContent(next)).x > width) { res.Add(line); line = word; }
+            else line = next;
         }
-        while (res.Count > 0 && res[^1].Length == 0) res.RemoveAt(res.Count - 1);
+        res.Add(line);
         return res;
     }
 }

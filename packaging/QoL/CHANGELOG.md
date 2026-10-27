@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.6
+- **Archive is a terminal now** (the mouse-driven list was hard to control): type commands like on the game's terminals — LIST (expeditions, ✓ — completed), LOGS [R4A1] (log files), READ name (Tab completes), PLAY name / STOP (audio logs), CLS, HELP, EXIT. ↑/↓ — history, PgUp/PgDn or the wheel — scroll, Esc — close.
+- ApparelFix: also logs how many cards the apparel popup got per clothes type (diagnostics for the empty APPAREL menu).
+
 ## 0.7.5
 - New module **ApparelFix** (diagnostics): logs how many apparel items the APPAREL menu got. (The first build also filtered the server's apparel list — that crashed the game at start and was taken out.)
 - Archive: audio logs play — P (or a click on the header line) plays / stops.

@@ -20,4 +20,23 @@ public class ApparelFix : ModuleBase
             try { ModInfo.Log.LogInfo($"[ApparelFix] APPAREL menu items: {__instance.m_allItems?.Count ?? -1}"); } catch { }
         }
     }
+
+    /// <summary>When the apparel popup is filled: how many cards it got for that clothes type.</summary>
+    [HarmonyPatch(typeof(CellMenu.CM_PlayerLobbyBar), nameof(CellMenu.CM_PlayerLobbyBar.UpdateClothesSelectionPoup))]
+    private static class Patch_Popup
+    {
+        private static void Postfix(CellMenu.CM_PlayerLobbyBar __instance, ClothesType type)
+        {
+            try
+            {
+                int ofType = 0;
+                var inv = PersistentInventoryManager.Current?.m_vanityItemsInventory?.m_allItems;
+                if (inv != null) foreach (var it in inv) if (it != null && it.type == type) ofType++;
+                var win = __instance.m_popupScrollWindow;
+                int cards = win != null ? win.GetComponentsInChildren<CellMenu.CM_Item>(true).Length : -1;
+                ModInfo.Log.LogInfo($"[ApparelFix] apparel popup {type}: inventory has {ofType}, popup items {cards}, visible {__instance.m_popupVisible}");
+            }
+            catch (Exception e) { ModInfo.Log.LogWarning($"[ApparelFix] popup: {e.Message}"); }
+        }
+    }
 }
