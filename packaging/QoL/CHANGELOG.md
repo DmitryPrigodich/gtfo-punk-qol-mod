@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.5
+- New fix **ApparelFix**: the APPAREL menu came out empty when the drop server lists an item the game data doesn't know ("Got vanity item with id … that does not exist"). Such items are left out; the log shows how many the menu got.
+- Archive: audio logs play — P (or a click on the header line) plays / stops.
+
 ## 0.7.4
 - New module **TerminalArchive**: an ARCHIVE button on the rundown screen (a copy of CREDITS, next to it) opens a terminal-like screen with the terminal logs of the expeditions you've completed in this rundown (the screen's own "finished" marks; secondary / overload logs too — SecondaryLayers). Click a line to open it, right click / Backspace — back, wheel — scroll, Esc — close. ShowUncompleted opens the rest too (spoilers).
   The button appears only once the rundown screen is fully up (CREDITS shown, expeditions placed) and hides with CREDITS; while the archive is open the screen's own buttons are paused (no game method is patched for it).

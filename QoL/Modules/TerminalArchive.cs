@@ -40,7 +40,7 @@ public class TerminalArchive : ModuleBase
 
     // ---------- data ----------
 
-    private class LogFile { public string Name, Text, Layer; public bool Audio; }
+    private class LogFile { public string Name, Text, Layer; public bool Audio; public uint AudioId; }
 
     private class Exp
     {
@@ -108,7 +108,7 @@ public class TerminalArchive : ModuleBase
         string text = null;
         try { var c = f.FileContent; text = c?.ToString(); if (string.IsNullOrWhiteSpace(text)) text = c?.UntranslatedText; } catch { }
         text = Tags.Replace(text ?? "", "").Replace("\r", "");
-        exp.Logs.Add(new LogFile { Name = f.FileName.Trim(), Text = string.IsNullOrWhiteSpace(text) ? Lang.T("(no text)", "(без текста)") : text, Layer = layer, Audio = f.AttachedAudioFile != 0 });
+        exp.Logs.Add(new LogFile { Name = f.FileName.Trim(), Text = string.IsNullOrWhiteSpace(text) ? Lang.T("(no text)", "(без текста)") : text, Layer = layer, Audio = f.AttachedAudioFile != 0, AudioId = f.AttachedAudioFile });
     }
 
     // ---------- the button ----------
@@ -255,8 +255,42 @@ public class TerminalArchive : ModuleBase
         BlockPage(true);
     }
 
+    // ---------- audio logs ----------
+
+    private static CellSoundPlayer _audio;
+    private static bool _playing;
+
+    private static uint CurrentAudio()
+    {
+        if (_level != 2 || _exp >= _exps.Count || _log >= _exps[_exp].Logs.Count) return 0;
+        return _exps[_exp].Logs[_log].AudioId;
+    }
+
+    private static void ToggleAudio()
+    {
+        uint id = CurrentAudio();
+        if (id == 0) return;
+        if (_playing) { StopAudio(); return; }
+        try
+        {
+            _audio ??= new CellSoundPlayer();
+            _audio.Post(id, true);
+            _playing = true;
+            ModInfo.Log.LogInfo($"[Archive] playing the audio log (event {id})");
+        }
+        catch (Exception e) { ModInfo.Log.LogWarning($"[Archive] audio log {id}: {e.Message}"); }
+    }
+
+    private static void StopAudio()
+    {
+        if (!_playing) return;
+        _playing = false;
+        try { _audio?.Stop(); } catch { }
+    }
+
     private static void Close()
     {
+        StopAudio();
         _open = false;
         Overlay.OnDraw -= Draw;
         BlockPage(false);
@@ -290,6 +324,7 @@ public class TerminalArchive : ModuleBase
 
     private static void Back()
     {
+        StopAudio();
         if (_level == 0) { Close(); return; }
         _level--;
         _sel = _level == 0 ? _exp : _log;
@@ -313,6 +348,7 @@ public class TerminalArchive : ModuleBase
         else if (_level == 1)
         {
             if (row < 0 || row >= _exps[_exp].Logs.Count) return;
+            StopAudio();
             _log = row; _level = 2; _sel = 0; _scroll = 0; _wrapWidth = -1f;
         }
     }
@@ -363,9 +399,11 @@ public class TerminalArchive : ModuleBase
 
         if (Input.GetKeyDown(KeyCode.Escape)) { Close(); return; }
         if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetMouseButtonDown(1)) { Back(); return; }
+        if (_level == 2 && Input.GetKeyDown(KeyCode.P)) { ToggleAudio(); return; }
         if (Input.GetMouseButtonDown(0))
         {
             if (!L.Panel.Contains(_cursor)) return; // the ARCHIVE button itself toggles; elsewhere — ignore
+            if (_level == 2 && CurrentAudio() != 0 && _cursor.y < L.Body.y && _cursor.y > L.Panel.y) { ToggleAudio(); return; } // the header line
             if (_hover >= 0) { _sel = _hover; Enter(_hover); }
             return;
         }
@@ -423,7 +461,9 @@ public class TerminalArchive : ModuleBase
         float top = L.Panel.y + L.Line * 0.6f;
         string path = "ARCHIVE://" + (_level >= 1 && _exp < _exps.Count ? _exps[_exp].Code : "")
             + (_level == 2 && _exp < _exps.Count && _log < _exps[_exp].Logs.Count ? "/" + _exps[_exp].Logs[_log].Name : "");
-        Text(x, top, w, L.Line, "> " + path, Amber);
+        Text(x, top, CurrentAudio() != 0 ? w * 0.6f : w, L.Line, "> " + path, Amber);
+        if (CurrentAudio() != 0)
+            Text(x + w * 0.62f, top, w * 0.38f, L.Line, _playing ? Lang.T("■ AUDIO PLAYING (P — stop)", "■ ИДЁТ АУДИО (P — стоп)") : Lang.T("▶ AUDIO LOG (P — play)", "▶ АУДИОЛОГ (P — играть)"), _playing ? Amber : Ink);
         Rect_(new Rect(x, top + L.Line * 1.25f, w, 1f), new Color(Ink.r, Ink.g, Ink.b, 0.3f));
 
         int count = RowCount();
@@ -441,7 +481,8 @@ public class TerminalArchive : ModuleBase
         }
 
         string hint = _level == 2
-            ? Lang.T("WHEEL / ↑↓ scroll    RMB / BACKSPACE back    ESC close", "КОЛЕСО / ↑↓ прокрутка    ПКМ / BACKSPACE назад    ESC закрыть")
+            ? (CurrentAudio() != 0 ? Lang.T("P / CLICK HEADER audio    ", "P / КЛИК ПО ЗАГОЛОВКУ аудио    ") : "")
+              + Lang.T("WHEEL / ↑↓ scroll    RMB / BACKSPACE back    ESC close", "КОЛЕСО / ↑↓ прокрутка    ПКМ / BACKSPACE назад    ESC закрыть")
             : Lang.T("CLICK / ENTER open    RMB / BACKSPACE back    ESC close", "КЛИК / ENTER открыть    ПКМ / BACKSPACE назад    ESC закрыть");
         Text(x, L.Panel.yMax - L.Line * 1.5f, w, L.Line, hint, Dim);
 
