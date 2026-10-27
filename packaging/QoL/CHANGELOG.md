@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.8
+- NoiseRemoval works only in levels: in the menus the game draws with the blue noise (likely why the APPAREL menu came out empty with QoL — the vanilla game shows it fine).
+
 ## 0.7.7
 - New fix **BotGearGuard**: a bot whose saved gear no longer exists (a sentry or the silenced pistol of GtfoPunk My Game My Rules after that mod is removed) gets stock gear of the same slot (the burst sentry for a tool) instead of an empty slot and endless resets.
 

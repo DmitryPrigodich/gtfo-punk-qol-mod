@@ -64,7 +64,7 @@ public class ScreenLiquidFilter : ModuleBase
 public class NoiseRemoval : ModuleBase
 {
     public override string Id => "NoiseRemoval";
-    public override string Description => "Remove the blue noise (grain) over the image. Dark areas may get darker. Off by default.";
+    public override string Description => "Remove the blue noise (grain) over the image in levels. Dark areas may get darker. Off by default.";
     public override ModuleSide Side => ModuleSide.Client;
     public override bool EnabledByDefault => false;
     public override IReadOnlyList<string> ReplacedBy => new[] { KnownMods.QoLFix };
@@ -76,6 +76,8 @@ public class NoiseRemoval : ModuleBase
     {
         private static bool Prefix()
         {
+            // Only in a level: the menus (the APPAREL icons among them) draw with the noise — without it they came out empty.
+            if (!GameUtil.InLevel) return true;
             if (PE_BlueNoise.s_computeShader == null) return false;
             if (_empty == null)
             {
