@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.12
+- New package icon.
+
 ## 0.7.11
 - Archive terminal:
   - covers **every rundown** you've opened on the rundown screen — the game shows "finished" only for the rundown on screen, so the finished expeditions are remembered in `BepInEx/config/GtfoPunk.Archive.txt`;
