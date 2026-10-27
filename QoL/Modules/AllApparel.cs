@@ -22,6 +22,7 @@ public class AllApparel : ModuleBase
 
     private static float _next;
     private static int _logged = -1;
+    private static bool _waitLogged;
 
     private static void Tick()
     {
@@ -30,13 +31,21 @@ public class AllApparel : ModuleBase
         try
         {
             var list = PersistentInventoryManager.Current?.m_vanityItemsInventory?.m_allItems;
-            if (list == null || list.Count == 0) return; // wait for the game's own list (from the server)
+            if (list == null || list.Count == 0) // wait for the game's own list (from the server)
+            {
+                if (!_waitLogged && UnityEngine.Time.realtimeSinceStartup > 90f) { _waitLogged = true; ModInfo.Log.LogInfo($"[AllApparel] no apparel list yet ({(list == null ? "not found" : "empty")})"); }
+                return;
+            }
             var have = new HashSet<uint>();
             for (int i = 0; i < list.Count; i++) { var it = list[i]; if (it != null) have.Add(it.id); }
-            int own = have.Count, added = 0;
+            int own = have.Count, added = 0, total = 0, enabled = 0;
             foreach (var t in GameDataBlockBase<VanityItemsTemplateDataBlock>.GetAllBlocks())
             {
-                if (t == null || !t.internalEnabled || have.Contains(t.persistentID)) continue;
+                if (t == null) continue;
+                total++;
+                if (!t.internalEnabled) continue;
+                enabled++;
+                if (have.Contains(t.persistentID)) continue;
                 list.Add(new VanityItem
                 {
                     publicName = t.publicName, type = t.type, prefab = t.prefab, id = t.persistentID,
@@ -44,10 +53,10 @@ public class AllApparel : ModuleBase
                 });
                 added++;
             }
-            if (added > 0 && _logged != list.Count)
+            if (_logged != list.Count)
             {
                 _logged = list.Count;
-                ModInfo.Log.LogInfo($"[AllApparel] apparel: {own} owned + {added} added = {list.Count}");
+                ModInfo.Log.LogInfo($"[AllApparel] apparel in the game data: {total} ({enabled} enabled); yours {own} + added {added} = {list.Count} in the menu");
             }
         }
         catch (Exception e) { ModInfo.Log.LogWarning($"[AllApparel] {e.Message}"); _next += 30f; }
