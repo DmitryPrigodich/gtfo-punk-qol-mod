@@ -22,7 +22,6 @@ Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rul
 | LockerItemPing | Pings the item inside an open locker/box instead of the whole container. |
 | ResourceAutoMark | Packs and consumables seen by you or teammates get a marker with name and charges (local only). |
 | ReturnToLocker | Hold E while looking into an open locker/box to put your pack or consumable back. |
-| AllApparel | All apparel available in the APPAREL menu. **Off by default** (experimental: the menu came out empty). |
 | PackControls | E — apply to whoever you look at, otherwise yourself; LMB — yourself; RMB — teammate. |
 | PackHelper | While holding a resource pack, teammates' health/ammo is shown above them. |
 | ResourceReceivedSound | Plays a sound when a teammate gives you ammo or heals you. |
@@ -54,7 +53,6 @@ Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rul
 | ScoutScreamMuffleFix | Sound no longer stays muffled after a scout scream. |
 | DoorFoamFix | C-foam no longer passes through door cracks. |
 | BotGearGuard | Bots with saved gear that no longer exists (a removed mod's sentry or gun) get stock gear instead of an empty slot. |
-| ApparelFix | Logs how many items the APPAREL menu got (diagnostics). |
 
 ## Credits
 Several features re-implement ideas from community mods (rewritten from scratch for the current game version): QoLFix (notpeelz), PingEverything / ResourceHelper / PacksHelper (Localia), DropItem (Extra), DMRReloadFix (randomuserhi), AutoReloadPlus (Dinorush), WeaponStatShower (DacreDOLOLO), BashTerm (food), TerminalCompletion (OneOfTheLiving), PreciseUI (Andocas), HUDToggler (ValenTeam). Thanks to their authors.
