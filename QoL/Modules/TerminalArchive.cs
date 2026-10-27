@@ -12,8 +12,9 @@ namespace GtfoPunk.QoL.Modules;
 /// <summary>
 /// ARCHIVE button on the rundown screen (a copy of the CREDITS button): opens a terminal with the terminal logs of the
 /// expeditions you've completed in the current rundown — read (and listen to) them again without replaying.
-/// Typed like the game's terminal: LIST (expeditions), LOGS [R4A1] (log files), READ name (Tab completes),
-/// PLAY / STOP (audio logs), CLS, HELP, EXIT. ↑/↓ — history, PgUp/PgDn / wheel — scroll, Esc — close.
+/// Typed like the game's terminal: LIST [R4 | R4A1] (code, name, log ID, audio), READ id (the start is enough, Tab
+/// completes), PLAY / STOP (audio logs), CLS, HELP, EXIT. ↑/↓ — history, PgUp/PgDn / wheel — scroll, Esc — close.
+/// Covers every rundown you've opened on the rundown screen (finished expeditions are remembered in a file).
 /// Client-side, reads only the game data and what the rundown screen shows.
 /// </summary>
 public class TerminalArchive : ModuleBase
@@ -47,23 +48,59 @@ public class TerminalArchive : ModuleBase
     {
         public string Code, Name;
         public bool Done;
+        public uint Rundown; public int Tier, Index;
         public readonly List<LogFile> Logs = new();
         public bool Open => Done || _showAll.Value;
     }
 
     private static readonly List<Exp> _exps = new();
     private static readonly Regex Tags = new("<[^>]*>");
-
-    /// <summary>The expeditions as the rundown screen shows them (its icons know the tier, the index and whether it's finished).</summary>
     private static readonly Regex FullCode = new(@"^R\d+[A-E]\d", RegexOptions.IgnoreCase);
 
-    private static void Build(CM_PageRundown_New page)
+    // ---------- completed expeditions of every rundown (remembered as you browse the rundowns) ----------
+
+    /// <summary>
+    /// The game shows "finished" only for the rundown on screen, so what you've seen finished is remembered in
+    /// BepInEx/config/GtfoPunk.Archive.txt: rundown block, tier, index, code, name. The archive lists every
+    /// remembered rundown — open a rundown once to add it.
+    /// </summary>
+    private class Done { public uint Rundown; public int Tier, Index; public string Code, Name; }
+
+    private static readonly Dictionary<string, Done> _done = new();
+    private static bool _doneLoaded;
+    private static string DonePath => System.IO.Path.Combine(BepInEx.Paths.ConfigPath, "GtfoPunk.Archive.txt");
+
+    private static void LoadDone()
     {
-        _exps.Clear();
-        if (page == null) return;
-        // All icon lists of the screen (some rundowns fill only the per-tier lists), each expedition once.
-        var icons = new List<CM_ExpeditionIcon_New>();
+        if (_doneLoaded) return;
+        _doneLoaded = true;
+        try
+        {
+            if (!System.IO.File.Exists(DonePath)) return;
+            foreach (var line in System.IO.File.ReadAllLines(DonePath))
+            {
+                var f = line.Split('\t');
+                if (f.Length < 5 || !uint.TryParse(f[0], out var r) || !int.TryParse(f[1], out var t) || !int.TryParse(f[2], out var i)) continue;
+                _done[$"{r}:{t}:{i}"] = new Done { Rundown = r, Tier = t, Index = i, Code = f[3], Name = f[4] };
+            }
+        }
+        catch (Exception e) { ModInfo.Log.LogWarning($"[Archive] {DonePath}: {e.Message}"); }
+    }
+
+    private static void SaveDone()
+    {
+        try { System.IO.File.WriteAllLines(DonePath, _done.Values.OrderBy(d => d.Rundown).ThenBy(d => d.Tier).ThenBy(d => d.Index).Select(d => $"{d.Rundown}\t{d.Tier}\t{d.Index}\t{d.Code}\t{d.Name}")); }
+        catch (Exception e) { ModInfo.Log.LogWarning($"[Archive] {DonePath}: {e.Message}"); }
+    }
+
+    /// <summary>Remembers the finished expeditions of the rundown on screen; returns the screen's other expeditions.</summary>
+    private static List<(Exp, ExpeditionInTierData)> ReadScreen(CM_PageRundown_New page)
+    {
+        var rest = new List<(Exp, ExpeditionInTierData)>();
+        var rd = page?.m_currentRundownData;
+        if (rd == null) return rest;
         var seen = new HashSet<IntPtr>();
+        bool changed = false;
         foreach (var list in new[] { page.m_expIconsAll, page.m_expIconsTier1, page.m_expIconsTier2, page.m_expIconsTier3, page.m_expIconsTier4, page.m_expIconsTier5, page.m_expIconsTierExt })
         {
             if (list == null) continue;
@@ -71,34 +108,55 @@ public class TerminalArchive : ModuleBase
             {
                 var icon = list[i];
                 var d = icon?.DataBlock;
-                if (d != null && seen.Add(d.Pointer)) icons.Add(icon);
+                if (d == null || !seen.Add(d.Pointer)) continue;
+                string shortName = Tags.Replace(icon.ShortName ?? "", "").Trim();
+                string code = FullCode.IsMatch(shortName) ? shortName : (d.Descriptive?.Prefix ?? "") + icon.Tier.ToString().Replace("Tier", "") + (icon.ExpIndex + 1);
+                string name = Tags.Replace(icon.PublicName ?? d.Descriptive?.PublicName ?? "?", "").Trim();
+                var st = icon.Status;
+                if (st == eExpeditionIconStatus.PlayedAndFinished || st == eExpeditionIconStatus.TierLockedFinishedAnyway)
+                {
+                    string key = $"{rd.persistentID}:{(int)icon.Tier}:{icon.ExpIndex}";
+                    if (!_done.ContainsKey(key)) { _done[key] = new Done { Rundown = rd.persistentID, Tier = (int)icon.Tier, Index = icon.ExpIndex, Code = code, Name = name }; changed = true; }
+                }
+                else rest.Add((new Exp { Code = code, Name = name, Rundown = rd.persistentID, Tier = (int)icon.Tier, Index = icon.ExpIndex }, d));
             }
         }
-        if (icons.Count == 0) { ModInfo.Log.LogWarning("[Archive] no expeditions on the rundown screen"); return; }
-        icons.Sort((x, y) => x.Tier != y.Tier ? x.Tier.CompareTo(y.Tier) : x.ExpIndex.CompareTo(y.ExpIndex));
-        foreach (var icon in icons)
+        if (changed) SaveDone();
+        return rest;
+    }
+
+    private static ExpeditionInTierData ExpData(uint rundown, int tier, int index)
+    {
+        var rd = GameDataBlockBase<RundownDataBlock>.GetBlock(rundown);
+        if (rd == null) return null;
+        var list = tier switch { 1 => rd.TierA, 2 => rd.TierB, 3 => rd.TierC, 4 => rd.TierD, 5 => rd.TierE, _ => null };
+        return list != null && index >= 0 && index < list.Count ? list[index] : null;
+    }
+
+    private static void Build(CM_PageRundown_New page)
+    {
+        _exps.Clear();
+        LoadDone();
+        var rest = ReadScreen(page);
+        foreach (var d in _done.Values.OrderBy(d => d.Rundown).ThenBy(d => d.Tier).ThenBy(d => d.Index))
         {
-            var d = icon.DataBlock;
-            string shortName = Tags.Replace(icon.ShortName ?? "", "").Trim();
-            string letter = icon.Tier.ToString().Replace("Tier", "");
-            string code = FullCode.IsMatch(shortName) ? shortName : (d.Descriptive?.Prefix ?? "") + letter + (icon.ExpIndex + 1);
-            var status = icon.Status;
-            var exp = new Exp
-            {
-                Code = code,
-                Name = Tags.Replace(icon.PublicName ?? d.Descriptive?.PublicName ?? "?", "").Trim(),
-                Done = status == eExpeditionIconStatus.PlayedAndFinished || status == eExpeditionIconStatus.TierLockedFinishedAnyway,
-            };
-            AddLayout(exp, d.LevelLayoutData, "MAIN");
-            if (_otherLayers.Value)
-            {
-                if (d.SecondaryLayerEnabled) AddLayout(exp, d.SecondaryLayout, "SECONDARY");
-                if (d.ThirdLayerEnabled) AddLayout(exp, d.ThirdLayout, "OVERLOAD");
-            }
+            var data = ExpData(d.Rundown, d.Tier, d.Index);
+            if (data == null) continue;
+            var exp = new Exp { Code = d.Code, Name = d.Name, Done = true, Rundown = d.Rundown, Tier = d.Tier, Index = d.Index };
+            AddLogs(exp, data);
             _exps.Add(exp);
         }
-        ModInfo.Log.LogInfo($"[Archive] rundown screen: {_exps.Count} expeditions, {_exps.Count(e => e.Done)} completed, {_exps.Where(e => e.Open).Sum(e => e.Logs.Count)} logs open; "
-            + string.Join(", ", _exps.Select(e => $"{e.Code}{(e.Done ? "✓" : "")}:{e.Logs.Count}")));
+        if (_showAll.Value) foreach (var (exp, data) in rest) { AddLogs(exp, data); _exps.Add(exp); }
+        ModInfo.Log.LogInfo($"[Archive] completed expeditions remembered: {_done.Count} in {_done.Values.Select(d => d.Rundown).Distinct().Count()} rundowns; "
+            + $"logs open: {_exps.Where(e => e.Open).Sum(e => e.Logs.Count)}; " + string.Join(", ", _exps.Select(e => $"{e.Code}:{e.Logs.Count}")));
+    }
+
+    private static void AddLogs(Exp exp, ExpeditionInTierData d)
+    {
+        AddLayout(exp, d.LevelLayoutData, "MAIN");
+        if (!_otherLayers.Value) return;
+        if (d.SecondaryLayerEnabled) AddLayout(exp, d.SecondaryLayout, "SECONDARY");
+        if (d.ThirdLayerEnabled) AddLayout(exp, d.ThirdLayout, "OVERLOAD");
     }
 
     private static void AddLayout(Exp exp, uint layoutId, string layer)
@@ -257,16 +315,15 @@ public class TerminalArchive : ModuleBase
     private static readonly List<string> _history = new();
     private static string _input = "";
     private static int _histPos, _scroll; // _scroll: lines up from the bottom
-    private static string _scope;          // expedition code LOGS / READ look in first (null — all)
 
     private static void OpenArchive()
     {
         Build(_btnPage ?? Page());
         _open = true;
         _openedFrame = Time.frameCount;
-        _out.Clear(); _input = ""; _scroll = 0; _scope = null;
+        _out.Clear(); _input = ""; _scroll = 0; _lastTab = null;
         Print(Lang.T("WARDEN ARCHIVE TERMINAL — logs of the expeditions you've completed", "АРХИВНЫЙ ТЕРМИНАЛ СМОТРИТЕЛЯ — логи пройденных экспедиций"), Amber);
-        Print(Lang.T("Commands: LIST, LOGS [code], READ name, PLAY name, STOP, CLS, HELP, EXIT", "Команды: LIST, LOGS [код], READ имя, PLAY имя, STOP, CLS, HELP, EXIT"), Dim);
+        Print(Lang.T("LIST [R4 | R4A1], READ id, PLAY id, STOP, CLS, HELP, EXIT", "LIST [R4 | R4A1], READ id, PLAY id, STOP, CLS, HELP, EXIT"), Dim);
         Print("", Ink);
         Run("LIST", false);
         Overlay.Ensure();
@@ -283,27 +340,22 @@ public class TerminalArchive : ModuleBase
         _wrapped = null;
     }
 
-    private static IEnumerable<Exp> OpenExps() => _exps.Where(e => e.Open);
-
-    private static IEnumerable<(Exp Exp, LogFile Log)> Files(string scope)
+    private static IEnumerable<(Exp Exp, LogFile Log)> Files(string filter)
     {
-        foreach (var e in OpenExps())
-            if (scope == null || e.Code.Equals(scope, StringComparison.OrdinalIgnoreCase))
+        foreach (var e in _exps.Where(e => e.Open))
+            if (filter == null || e.Code.StartsWith(filter, StringComparison.OrdinalIgnoreCase))
                 foreach (var l in e.Logs) yield return (e, l);
     }
 
-    private static (Exp, LogFile) FindFile(string name)
+    /// <summary>A log by its ID, or by the start of it when that's unique.</summary>
+    private static (Exp, LogFile) FindFile(string id)
     {
-        name = name.Trim();
-        foreach (var scope in new[] { _scope, null })
-        {
-            var all = Files(scope).ToList();
-            var hit = all.FirstOrDefault(f => f.Log.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-            if (hit.Log != null) return hit;
-            var pre = all.Where(f => f.Log.Name.StartsWith(name, StringComparison.OrdinalIgnoreCase)).ToList();
-            if (pre.Count == 1) return pre[0];
-        }
-        return (null, null);
+        id = id.Trim();
+        var all = Files(null).ToList();
+        var hit = all.FirstOrDefault(f => f.Log.Name.Equals(id, StringComparison.OrdinalIgnoreCase));
+        if (hit.Log != null) return hit;
+        var pre = all.Where(f => f.Log.Name.StartsWith(id, StringComparison.OrdinalIgnoreCase)).GroupBy(f => f.Log.Name.ToUpperInvariant()).ToList();
+        return pre.Count == 1 ? pre[0].First() : (null, null);
     }
 
     private static void Run(string line, bool echo = true)
@@ -319,40 +371,30 @@ public class TerminalArchive : ModuleBase
         {
             case "HELP": case "MAN":
                 Print(Lang.T(
-                    "LIST — expeditions of this rundown (✓ — completed)\nLOGS — log files of the completed ones; LOGS R4A1 — of one\nREAD name — show a log (Tab completes the name)\nPLAY name — play an audio log; STOP — stop it\nCLS — clear the screen; EXIT or Esc — close\n↑/↓ — command history, PgUp/PgDn or the wheel — scroll",
-                    "LIST — экспедиции рандауна (✓ — пройдена)\nLOGS — файлы логов пройденных; LOGS R4A1 — одной\nREAD имя — показать лог (Tab дописывает имя)\nPLAY имя — включить аудиолог; STOP — выключить\nCLS — очистить экран; EXIT или Esc — закрыть\n↑/↓ — история команд, PgUp/PgDn или колесо — прокрутка"), Ink);
+                    "LIST — logs of all completed expeditions; LIST R4 — of a rundown; LIST R4A1 — of one\nREAD id — show a log (the start of the ID is enough; Tab completes)\nPLAY id — play an audio log; STOP — stop it\nCLS — clear the screen; EXIT or Esc — close\n↑/↓ — command history, PgUp/PgDn or the wheel — scroll\nA rundown gets here once you've opened it on the rundown screen.",
+                    "LIST — логи всех пройденных экспедиций; LIST R4 — рандауна; LIST R4A1 — одной\nREAD id — показать лог (хватит начала ID; Tab дописывает)\nPLAY id — включить аудиолог; STOP — выключить\nCLS — очистить экран; EXIT или Esc — закрыть\n↑/↓ — история команд, PgUp/PgDn или колесо — прокрутка\nРандаун попадает сюда, когда ты открыл его на экране рандаунов."), Ink);
                 break;
-            case "LIST": case "LS": case "DIR":
-                if (_exps.Count == 0) { Print(Lang.T("NO DATA", "НЕТ ДАННЫХ"), Dim); break; }
-                foreach (var e in _exps)
-                {
-                    string state = e.Done ? "✓" : " ";
-                    string logs = e.Open ? Lang.T($"{e.Logs.Count} logs", $"логов: {e.Logs.Count}") : Lang.T("— not completed —", "— не пройдена —");
-                    Print($" {state} {e.Code,-7} {(e.Open ? e.Name.ToUpperInvariant() : "████████"),-28} {logs}", e.Open ? Ink : Dim);
-                }
-                break;
-            case "LOGS": case "LOG":
+            case "LIST": case "LS": case "DIR": case "LOGS":
             {
-                string scope = arg.Length > 0 ? arg.ToUpperInvariant() : null;
-                if (scope != null && !_exps.Any(e => e.Code.Equals(scope, StringComparison.OrdinalIgnoreCase))) { Print(Lang.T($"No expedition {scope}. LIST shows them.", $"Нет экспедиции {scope}. Список — LIST."), Dim); break; }
-                if (scope != null && !OpenExps().Any(e => e.Code.Equals(scope, StringComparison.OrdinalIgnoreCase))) { Print(Lang.T($"{scope}: not completed — its logs are locked.", $"{scope}: не пройдена — логи закрыты."), Dim); break; }
-                _scope = scope;
-                var files = Files(scope).ToList();
-                if (files.Count == 0) { Print(Lang.T("No logs.", "Логов нет."), Dim); break; }
-                string last = null;
-                foreach (var (e, l) in files)
+                string filter = arg.Length > 0 ? arg.ToUpperInvariant() : null;
+                var files = Files(filter).ToList();
+                if (files.Count == 0)
                 {
-                    if (e.Code != last) { Print($"{e.Code}  {e.Name.ToUpperInvariant()}", Amber); last = e.Code; }
-                    Print($"   {l.Name,-36} {l.Layer,-10}{(l.Audio ? Lang.T(" [AUDIO]", " [АУДИО]") : "")}", Ink);
+                    Print(filter == null ? Lang.T("No completed expeditions with logs yet (open a rundown on the rundown screen to add it).", "Пока нет пройденных экспедиций с логами (открой рандаун на экране рандаунов, чтобы он добавился).")
+                                         : Lang.T($"Nothing for {filter}.", $"Для {filter} ничего нет."), Dim);
+                    break;
                 }
+                Print(Lang.T("CODE\tNAME\tLOG ID\tAUDIO", "КОД\tНАЗВАНИЕ\tID ЛОГА\tАУДИО"), Dim);
+                foreach (var (e, l) in files)
+                    Print($"{e.Code}\t{e.Name.ToUpperInvariant()}\t{l.Name}\t{(l.Audio ? Lang.T("yes", "да") : "")}", e.Done ? Ink : Dim);
                 break;
             }
             case "READ": case "CAT": case "LESS": case "OPEN":
             {
-                if (arg.Length == 0) { Print(Lang.T("READ which file? LOGS lists them.", "READ какой файл? Список — LOGS."), Dim); break; }
+                if (arg.Length == 0) { Print(Lang.T("READ which log? LIST shows them.", "READ какой лог? Список — LIST."), Dim); break; }
                 var (e, l) = FindFile(arg);
-                if (l == null) { Print(Lang.T($"No such log: {arg}", $"Нет такого лога: {arg}"), Dim); break; }
-                Print($"——— {e.Code} / {l.Name} ———", Amber);
+                if (l == null) { Print(Lang.T($"No such log (or several start like that): {arg}", $"Нет такого лога (или их несколько): {arg}"), Dim); break; }
+                Print($"——— {e.Code} {e.Name.ToUpperInvariant()} / {l.Name} ———", Amber);
                 Print(l.Text, Ink);
                 if (l.Audio) Print(Lang.T($"[audio log — PLAY {l.Name}]", $"[аудиолог — PLAY {l.Name}]"), Dim);
                 Print("", Ink);
@@ -372,14 +414,15 @@ public class TerminalArchive : ModuleBase
         }
     }
 
-    /// <summary>Tab after READ / PLAY: completes the file name (the common part if there are several).</summary>
+    private static string _lastTab;
+
+    /// <summary>Tab after READ / PLAY: completes the log ID (the common part if there are several; the choices once).</summary>
     private static void Complete()
     {
         var m = Regex.Match(_input, @"^\s*(READ|CAT|LESS|OPEN|PLAY)\s+(\S*)$", RegexOptions.IgnoreCase);
         if (!m.Success) return;
         string pre = m.Groups[2].Value;
-        var names = (Files(_scope).Any() ? Files(_scope) : Files(null)).Select(f => f.Log.Name)
-            .Where(n => n.StartsWith(pre, StringComparison.OrdinalIgnoreCase)).Distinct().ToList();
+        var names = Files(null).Select(f => f.Log.Name).Where(n => n.StartsWith(pre, StringComparison.OrdinalIgnoreCase)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (names.Count == 0) return;
         string common = names[0];
         foreach (var n in names.Skip(1))
@@ -388,8 +431,14 @@ public class TerminalArchive : ModuleBase
             while (k < common.Length && k < n.Length && char.ToUpperInvariant(common[k]) == char.ToUpperInvariant(n[k])) k++;
             common = common.Substring(0, k);
         }
-        if (names.Count > 1 && common.Length <= pre.Length) { Print(string.Join("   ", names), Dim); return; }
+        if (names.Count > 1 && common.Length <= pre.Length)
+        {
+            if (_lastTab != _input) Print(string.Join("   ", names), Dim); // the choices once, not on every Tab
+            _lastTab = _input;
+            return;
+        }
         _input = _input.Substring(0, m.Groups[2].Index) + common;
+        _lastTab = null;
     }
 
     // ---------- audio logs ----------
@@ -526,7 +575,9 @@ public class TerminalArchive : ModuleBase
         if (_wrapped == null || _wrapWidth != L.Body.width || _wrapFont != L.Font)
         {
             _wrapped = new List<(string, Color)>();
-            foreach (var (t, c) in _out) foreach (var w in Wrap(t, L.Body.width)) _wrapped.Add((w, c));
+            foreach (var (t, c) in _out)
+                if (t.IndexOf('\t') >= 0) _wrapped.Add((t, c)); // table rows aren't wrapped
+                else foreach (var w in Wrap(t, L.Body.width)) _wrapped.Add((w, c));
             _wrapWidth = L.Body.width; _wrapFont = L.Font;
         }
         int rows = L.Rows;
@@ -536,7 +587,16 @@ public class TerminalArchive : ModuleBase
         for (int i = 0; i < rows && first + i < _wrapped.Count; i++)
         {
             var (t, c) = _wrapped[first + i];
-            Text(L.Body.x, L.Body.y + i * L.Line, L.Body.width, L.Line, t, c);
+            float y = L.Body.y + i * L.Line;
+            if (t.IndexOf('\t') < 0) { Text(L.Body.x, y, L.Body.width, L.Line, t, c); continue; }
+            // A table row: columns at fixed places.
+            var cols = t.Split('\t');
+            float[] at = { 0f, 0.09f, 0.42f, 0.8f };
+            for (int k = 0; k < cols.Length && k < at.Length; k++)
+            {
+                float x0 = L.Body.x + L.Body.width * at[k], x1 = k + 1 < at.Length ? L.Body.x + L.Body.width * at[k + 1] : L.Body.xMax;
+                Text(x0, y, x1 - x0 - 6f, L.Line, cols[k], c);
+            }
         }
         if (_wrapped.Count > rows)
         {
@@ -550,7 +610,7 @@ public class TerminalArchive : ModuleBase
         float py = L.Panel.yMax - L.Line * 1.8f;
         Rect_(new Rect(L.Body.x - 4f, py - 3f, L.Body.width + 8f, 1f), new Color(Ink.r, Ink.g, Ink.b, 0.3f));
         bool blink = ((int)(Time.unscaledTime * 2f) & 1) == 0;
-        Text(L.Body.x, py, L.Body.width, L.Line, "\\\\ROOT\\ARCHIVE" + (_scope != null ? "\\" + _scope : "") + "> " + _input + (blink ? "_" : ""), Amber);
+        Text(L.Body.x, py, L.Body.width, L.Line, "\\\\ROOT\\ARCHIVE> " + _input + (blink ? "_" : ""), Amber);
         if (_scroll > 0) Text(L.Body.x + L.Body.width * 0.7f, py, L.Body.width * 0.3f, L.Line, Lang.T("↓ PgDn — back to the end", "↓ PgDn — к концу"), Dim);
         GUI.color = old;
     }
