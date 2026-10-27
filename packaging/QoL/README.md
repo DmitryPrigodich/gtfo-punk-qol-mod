@@ -53,6 +53,7 @@ Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rul
 | BioTrackerFixes | Bio tracker doesn't eat tool refills; old scan tags don't linger on screen. |
 | ScoutScreamMuffleFix | Sound no longer stays muffled after a scout scream. |
 | DoorFoamFix | C-foam no longer passes through door cracks. |
+| BotGearGuard | Bots with saved gear that no longer exists (a removed mod's sentry or gun) get stock gear instead of an empty slot. |
 | ApparelFix | Logs how many items the APPAREL menu got (diagnostics). |
 
 ## Credits

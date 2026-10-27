@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.7
+- New fix **BotGearGuard**: a bot whose saved gear no longer exists (a sentry or the silenced pistol of GtfoPunk My Game My Rules after that mod is removed) gets stock gear of the same slot (the burst sentry for a tool) instead of an empty slot and endless resets.
+
 ## 0.7.6
 - **Archive is a terminal now** (the mouse-driven list was hard to control): type commands like on the game's terminals — LIST (expeditions, ✓ — completed), LOGS [R4A1] (log files), READ name (Tab completes), PLAY name / STOP (audio logs), CLS, HELP, EXIT. ↑/↓ — history, PgUp/PgDn or the wheel — scroll, Esc — close.
 - ApparelFix: also logs how many cards the apparel popup got per clothes type (diagnostics for the empty APPAREL menu).
