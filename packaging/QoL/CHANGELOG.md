@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.10
+- **AllApparel is back, on by default**: every apparel item in the APPAREL menu (local only, nothing sent to the server). Done without hooking the game's apparel methods this time (that hook emptied the menu): the list is topped up in the menus every 2 s. Log: `[AllApparel] apparel: N owned + M added`.
+
 ## 0.7.9
 - **APPAREL menu fix**: removed AllApparel (and the ApparelFix diagnostics). Since AllApparel came in (0.7.3) the menu showed no clothes even with the unlock switched off — most likely its hook on the game's apparel inventory update alone broke it. Nothing of QoL touches apparel anymore.
 - NoiseRemoval back as before (0.7.8 limited it to levels — not the cause).
