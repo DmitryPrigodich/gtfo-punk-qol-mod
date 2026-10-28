@@ -5,6 +5,7 @@
 - Archive: the console-font attempt is removed (the game doesn't have the method for it) — the default font, no warning in the log.
 - Config: every key no longer used is removed from the file at start (also sections of removed modules: ApparelFix, LoadoutPresets, StatusInChat; General.TextLanguageAutoOnce).
 - Documentation: `docs/GUIDE.md` (English), `docs/GUIDE.ru.md` (Russian).
+- The plugin's version (log, watermark) matches the package.
 
 ## 0.7.12
 - New package icon.
