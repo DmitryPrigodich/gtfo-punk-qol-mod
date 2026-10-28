@@ -36,6 +36,8 @@ public class BotGearGuard : ModuleBase
                 uint cat = gearSetup.GetCompID(eGearComponent.Category);
                 if (cat == 0 || GameDataBlockBase<GearCategoryDataBlock>.HasBlock(cat)) return;
                 var slot = SlotOfMissing(cat);
+                if (slot == InventorySlot.None) // other added gear (e.g. test variants): the slot of its base item
+                    try { slot = GameDataBlockBase<ItemDataBlock>.GetBlock(gearSetup.GetCompID(eGearComponent.BaseItem))?.inventorySlot ?? InventorySlot.None; } catch { }
                 var stock = slot == InventorySlot.None ? null : FindStock(slot);
                 if (stock == null) { ModInfo.Log.LogWarning($"[BotGearGuard] bot gear with missing category {cat}: no replacement found"); return; }
                 ModInfo.Log.LogWarning($"[BotGearGuard] bot gear with missing category {cat} ({slot}) replaced by '{stock.name}'");

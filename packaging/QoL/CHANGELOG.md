@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.14
+- BotGearGuard: a bot's missing gear of any added kind (not only the silenced pistol and the sentries) is replaced by stock gear of the slot its base item belongs to — e.g. test weapons removed later.
+
 ## 0.7.13
 - New **MenuMusic**: the main-menu music keeps playing on the rundown screen and in the lobby. The game itself switches the music to silence as soon as the rundown screen opens, and with SkipIntro the start screen lasts only a few seconds — so there was practically no menu music. Silenced when the drop starts; the level's music is untouched.
 - Archive: the console-font attempt is removed (the game doesn't have the method for it) — the default font, no warning in the log.
