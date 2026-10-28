@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.13
+- New **MenuMusic**: the main-menu music keeps playing on the rundown screen and in the lobby. The game itself switches the music to silence as soon as the rundown screen opens, and with SkipIntro the start screen lasts only a few seconds — so there was practically no menu music. Silenced when the drop starts; the level's music is untouched.
+- Archive: the console-font attempt is removed (the game doesn't have the method for it) — the default font, no warning in the log.
+- Config: every key no longer used is removed from the file at start (also sections of removed modules: ApparelFix, LoadoutPresets, StatusInChat; General.TextLanguageAutoOnce).
+- Documentation: `docs/GUIDE.md` (English), `docs/GUIDE.ru.md` (Russian).
+
 ## 0.7.12
 - New package icon.
 

@@ -2,7 +2,7 @@
 
 Quality-of-life features and bug fixes for GTFO. Client-side only: no host needed, no balance changes, safe with randoms.
 
-A plugin for [BepInEx 6 IL2CPP](https://thunderstore.io/c/gtfo/p/BepInEx/BepInExPack_GTFO/) (GTFO). Feature description for players: [packaging/QoL/README.md](packaging/QoL/README.md), version history: [packaging/QoL/CHANGELOG.md](packaging/QoL/CHANGELOG.md).
+A plugin for [BepInEx 6 IL2CPP](https://thunderstore.io/c/gtfo/p/BepInEx/BepInExPack_GTFO/) (GTFO). Guide: [docs/GUIDE.md](docs/GUIDE.md) · [docs/GUIDE.ru.md](docs/GUIDE.ru.md). Package page text: [packaging/QoL/README.md](packaging/QoL/README.md), version history: [packaging/QoL/CHANGELOG.md](packaging/QoL/CHANGELOG.md), publishing: [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Install (players)
 Zip from releases → r2modman → *Settings → Import local mod*. Requires BepInExPack_GTFO.

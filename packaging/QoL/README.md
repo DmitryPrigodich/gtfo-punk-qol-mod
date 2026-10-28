@@ -11,12 +11,15 @@ Client-side quality-of-life features and bug fixes for GTFO.
 
 Gameplay-changing features live in a separate package: **GtfoPunk My Game My Rules**.
 
+Full guide (every feature and setting): [English](https://github.com/DmitryPrigodich/gtfo-punk-qol-mod/blob/main/docs/GUIDE.md) · [Русский](https://github.com/DmitryPrigodich/gtfo-punk-qol-mod/blob/main/docs/GUIDE.ru.md)
+
 ## Features
 
 ### Interface and convenience
 | Feature | What it does |
 |---|---|
 | SkipIntro | Skips the startup intro. |
+| MenuMusic | The main-menu music keeps playing on the rundown screen and in the lobby (the game silences it there). |
 | PingDisplay | Ping next to player names in the lobby, your ping to the host in the corner during a mission. |
 | PingAnything | If the game finds nothing to ping: pings sleeping enemies nearby (≤12 m) or any world point. |
 | LockerItemPing | Pings the item inside an open locker/box instead of the whole container. |
@@ -65,3 +68,7 @@ Several features re-implement ideas from community mods (rewritten from scratch 
 Удобства и багфиксы для GTFO. Всё работает только у тебя: хост не нужен, баланс не меняется, можно играть с рандомами. Каждая фича включается и выключается в `BepInEx/config/AmDDRed.GtfoPunk.QoL.cfg`. Если у тебя уже стоит мод с такой же функцией, наша часть сама выключится. Что включено, что нет и почему — видно в логе при запуске.
 
 Геймплейные изменения — в отдельном пакете **GtfoPunk My Game My Rules**.
+
+Главное: архив логов пройденных экспедиций (кнопка ARCHIVE у CREDITS), музыка в меню и лобби, вся одежда в APPAREL, пинг всего подряд, авто-метки ресурсов, точный HUD, терминал «как в Linux», статистика экспедиции, исправления багов игры.
+
+Подробное руководство: [по-русски](https://github.com/DmitryPrigodich/gtfo-punk-qol-mod/blob/main/docs/GUIDE.ru.md).
