@@ -15,6 +15,7 @@ Client-side quality of life and bug fixes for GTFO (BepInEx 6, IL2CPP). [Рус�
 | Feature | What it does | Settings |
 |---|---|---|
 | SkipIntro | Skips the intro at game start. | — |
+| LoginRetry | Black screen at start (the log stops at `PlayFabManager.OnSteamInitialized` — Steam never answers the login): asks Steam for the login ticket again, every 6 s, up to 5 times. | `WaitSeconds`, `Tries` |
 | MenuMusic | The main-menu music keeps playing on the rundown screen and in the lobby (the game silences it there; with SkipIntro there was practically no menu music at all). Silenced when the drop starts. | — |
 | TerminalArchive | **ARCHIVE** button next to CREDITS on the rundown screen: a terminal with the logs of the expeditions you've completed (every rundown you've opened). | `ShowUncompleted`, `SecondaryLayers`, `ButtonPlacement`, `FontScale` |
 | AllApparel | Every apparel item (helmets, torsos, legs, backpacks, palettes) in the APPAREL menu. Local only — nothing is sent anywhere. | — |

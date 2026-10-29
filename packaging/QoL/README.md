@@ -19,6 +19,7 @@ Full guide (every feature and setting): [English](https://github.com/DmitryPrigo
 | Feature | What it does |
 |---|---|
 | SkipIntro | Skips the startup intro. |
+| LoginRetry | Black screen at start (Steam doesn't answer the login): asks Steam for the login ticket again. |
 | MenuMusic | The main-menu music keeps playing on the rundown screen and in the lobby (the game silences it there). |
 | PingDisplay | Ping next to player names in the lobby, your ping to the host in the corner during a mission. |
 | PingAnything | If the game finds nothing to ping: pings sleeping enemies nearby (≤12 m) or any world point. |

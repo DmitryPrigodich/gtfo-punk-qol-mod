@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.15
+- LoginRetry (new): now and then the game hangs on a black screen at start — it asks Steam for a login ticket and Steam never answers (the log stops at `PlayFabManager.OnSteamInitialized`; a restart helps). No answer for 6 s → the ticket is requested again, up to 5 times. Log: `[LoginRetry] …`. `[LoginRetry] WaitSeconds`, `Tries`.
+
 ## 0.7.14
 - BotGearGuard: a bot's missing gear of any added kind (not only the silenced pistol and the sentries) is replaced by stock gear of the slot its base item belongs to — e.g. test weapons removed later.
 
