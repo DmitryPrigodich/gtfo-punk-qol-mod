@@ -45,11 +45,11 @@ public class ResourceReceivedSound : ModuleBase
         private static void Prefix(ResourcePackFirstPerson __instance)
         {
             var owner = __instance.Owner;
-            if (owner == null || !owner.IsLocallyOwned) return;
+            if (!GameUtil.IsLocalHuman(owner)) return;
             var receiver = __instance.m_actionReceiver;
             if (receiver == null) return;
             var target = ((Il2CppObjectBase)receiver).TryCast<PlayerAgent>();
-            if (target != null && target.IsLocallyOwned)
+            if (GameUtil.IsLocalHuman(target))
                 _selfApplyUntil = Time.time + 2f;
         }
     }
@@ -71,7 +71,7 @@ public class ResourceReceivedSound : ModuleBase
         private static void Prefix(Dam_PlayerDamageLocal __instance, pSetHealthData data)
         {
             var owner = __instance.Owner;
-            if (owner == null || !owner.IsLocallyOwned) return;
+            if (!GameUtil.IsLocalHuman(owner)) return;
 
             float max = __instance.HealthMax;
             float before = __instance.Health;

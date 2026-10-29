@@ -15,7 +15,7 @@ public class SprintCancelReload : ModuleBase
 
     private static void Check(PlayerAgent owner, bool crouching)
     {
-        if (owner == null || !owner.IsLocallyOwned) return;
+        if (!GameUtil.IsLocalHuman(owner)) return; // not the host's bots: they'd stop reloading while you sprint
 
         // RunInput changes RunToggleLock as a side effect — restore it.
         bool toggleLock = PlayerLocomotion.RunToggleLock;

@@ -65,7 +65,7 @@ public class PackControls : ModuleBase
             if (!_pickTarget) return true;
             _pickTarget = false;
             var owner = __instance.Owner;
-            if (owner == null || !owner.IsLocallyOwned) return true;
+            if (!GameUtil.IsLocalHuman(owner)) return true;
 
             bool useDown = Down(owner, InputAction.Use);
             bool selfByFire = false;

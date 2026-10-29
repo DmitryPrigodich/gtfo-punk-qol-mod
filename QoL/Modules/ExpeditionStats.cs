@@ -145,7 +145,7 @@ public class ExpeditionStats : ModuleBase
         private static void Postfix(ResourcePackFirstPerson __instance)
         {
             var owner = __instance.Owner;
-            if (owner == null || !owner.IsLocallyOwned) return;
+            if (!GameUtil.IsLocalHuman(owner)) return;
             _packs.TryGetValue(__instance.m_packType, out int n);
             _packs[__instance.m_packType] = n + 1;
         }

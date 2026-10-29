@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.16
+- The host's bots are no longer treated as the local player (the game calls them "locally owned" too): SprintCancelReload cancelled a bot's reload whenever you sprinted — a bot walking along with you never finished reloading (seen with a Drekker Pres MOD 556). Also fixed for WeaponAnimFix, PackControls, ResourceReceivedSound and ExpeditionStats (bots' packs and heals no longer count as yours).
+
 ## 0.7.15
 - LoginRetry (new): now and then the game hangs on a black screen at start — it asks Steam for a login ticket and Steam never answers (the log stops at `PlayFabManager.OnSteamInitialized`; a restart helps). No answer for 6 s → the ticket is requested again, up to 5 times. Log: `[LoginRetry] …`. `[LoginRetry] WaitSeconds`, `Tries`.
 

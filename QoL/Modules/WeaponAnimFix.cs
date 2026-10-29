@@ -15,7 +15,7 @@ public class WeaponAnimFix : ModuleBase
     private static bool Local(ItemEquippable item)
     {
         var owner = item.Owner;
-        return owner != null && owner.IsLocallyOwned;
+        return GameUtil.IsLocalHuman(owner);
     }
 
     [HarmonyPatch(typeof(ItemEquippable), nameof(ItemEquippable.OnUnWield))]
